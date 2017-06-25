@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 source "$(dirname $0)/../utils/utils.sh"
 
-source "$(dirname $0)/../../lib/utils/utils.sh"
-source "$(dirname $0)/../../lib/utils/trycatch.sh"
+source "$(dirname $0)/../../lib/utils.sh"
+source "$(dirname $0)/../../lib/trycatch.sh"
 
 # Disable the exiterr
 set +e
@@ -52,8 +52,13 @@ function test_try_catch_command_not_found() {
     assertEquals 99 $st
     set +e
 
+    # The following raises different values depending on the bash version.
+    # For newer versions it raises 127 whereas for older ones it raises 1
     try my_func
-    catch || assertEquals 1 $?
+    catch || local res=$?
+    set -e
+    echo $res | grep -qEx "(1|127)"
+    set +e
 }
 
 function test_try_catch_keep_error_option() {

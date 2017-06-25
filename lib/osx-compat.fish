@@ -23,7 +23,7 @@ set GNUBIN "/usr/local/opt/coreutils/libexec/gnubin"
 # Output:
 #   None
 #######################################
-function pearl_update_path
+function buava_update_path
     [ -d "$GNUBIN" ]; and set PATH $GNUBIN $PATH
     return 0
 end
@@ -37,7 +37,7 @@ end
 # This function is useful for OSX systems in order to ensure that
 # GNU executables have major priority against the local executables.
 #
-# The difference with pearl_update_path is that the current function does
+# The difference with buava_update_path is that the current function does
 # not pollute PATH variable.
 #
 # Globals:
@@ -50,7 +50,7 @@ end
 # Output:
 #   -            : The command output.
 #######################################
-function pearl_attempt_command
+function buava_attempt_command
     set cmd $argv[1]
     set --erase argv[1]
     if [ -x "$GNUBIN/$cmd" ]

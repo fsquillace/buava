@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 source "$(dirname $0)/../utils/utils.sh"
 
+# Do NOT remove the next line as you do not want to remove the original
+# HOME directory!
 unset HOME
-export HOME=$(TMPDIR=/tmp mktemp -d -t pearl-user-home.XXXXXXX)
-unset PEARL_HOME
-export PEARL_HOME=$(TMPDIR=/tmp mktemp -d -t pearl-home.XXXXXXX)
+export HOME=$(TMPDIR=/tmp mktemp -d -t buava-user-home.XXXXXXX)
 
-source "$(dirname $0)/../../lib/utils/utils.sh"
+source "$(dirname $0)/../../lib/utils.sh"
 
 # Disable the exiterr
 set +e
 
-FILEPATH=/tmp/file_pearl_test
+FILEPATH=/tmp/file_buava_test
 
 function oneTimeSetUp(){
     setUpUnitTests
@@ -20,13 +20,11 @@ function oneTimeSetUp(){
 function setUp(){
     touch $FILEPATH
     mkdir -p $HOME/symlinks
-    mkdir -p $PEARL_HOME/bin
 }
 
 function tearDown(){
     rm $FILEPATH
     rm -rf $HOME
-    rm -rf $PEARL_HOME
 }
 
 function test_check_not_null(){
@@ -320,30 +318,6 @@ function test_unlink(){
 
 function test_unlink_not_a_program(){
     assertCommandFailOnStatus 33 unlink "notvim" $FILEPATH
-}
-
-function test_link_to_path_null_executable_path(){
-    assertCommandFailOnStatus 11 link_to_path ""
-}
-
-function test_link_to_path(){
-    echo "Content" > $HOME/binary
-    assertCommandSuccess link_to_path "$HOME/binary"
-    assertEquals "Content" "$(cat $PEARL_HOME/bin/binary)"
-}
-
-function test_unlink_from_path_null_executable_path(){
-    assertCommandFailOnStatus 11 unlink_from_path ""
-}
-
-function test_unlink_from_path(){
-    echo "Content" > $HOME/binary
-    ln -s $HOME/binary $PEARL_HOME/bin
-    [[ -L "$PEARL_HOME/bin/binary" ]]
-    assertEquals 0 $?
-    assertCommandSuccess unlink_from_path "$HOME/binary"
-    [[ ! -L "$PEARL_HOME/bin/binary" ]]
-    assertEquals 0 $?
 }
 
 function test_link_to_null_file_path(){
