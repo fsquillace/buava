@@ -27,6 +27,8 @@ SOURCE_LINES[zsh]="source \"{}\""
 NULL_EXCEPTION=11
 WRONG_ANSWER=33
 NO_FILE_OR_DIRECTORY=2
+NOT_A_SYMLINK=44
+BROKEN_SYMLINK=45
 
 #######################################
 # Check if the argument is null.
@@ -507,12 +509,12 @@ function unlink() {
 
 #######################################
 # Symlink the given file to the given destination
-# path (containing the symlink name included).
+# path.
 #
 # The function is idempotent, so calling this function multiple
 # times will link the file once.
 #
-# If $file_path does not exist, the function will fail.
+# The function will fail according to the condition in `check_link` function.
 #
 # Example of usage:
 #    link_to "~/myfile" "~/mysymlink"
@@ -521,11 +523,13 @@ function unlink() {
 #  None
 # Arguments:
 #   file_path ($1)       : The source file path.
-#   symlink_path ($1)    : The destination symlink path
+#   symlink_path ($2)    : The destination symlink path
 #                          (with symlink name included).
 # Returns:
-#   NO_FILE_OR_DIRECTORY : $file_path does not exist.
 #   0                    : Successfully linked.
+#   NO_FILE_OR_DIRECTORY : $file_path does not exist.
+#   36                   : Symlink exists on a differt source file.
+#   NOT_A_SYMLINK        : Symlink is not a symbolic link.
 # Output:
 #   None
 #######################################
@@ -535,47 +539,52 @@ function link_to() {
     local symlink_path=$2
     check_not_null ${symlink_path}
 
-    [[ ! -e "${file_path}" ]] \
-        && { error "The path $file_path does not exist" ; return $NO_FILE_OR_DIRECTORY; }
-
-    unlink_from "${file_path}" "${symlink_path}"
-    ln -s "${file_path}" "${symlink_path}"
+    check_link "${file_path}" "${symlink_path}"
+    [[ ! -L ${symlink_path} ]] && ln -s "${file_path}" "${symlink_path}"
 
     return 0
 }
 
 #######################################
-# Remove the symlink of the given file to the given destination
-# path (containing the symlink name included).
+# Check if the symlink for the given file is properly installed.
 #
-# The function is idempotent, so calling this function multiple
-# times will unlink the file once.
-#
-# If the symlink is broken, the symlink will be deleted.
-# If the symlink corresponds to a different source file path
-# from $file_path, the symlink will not be deleted but an error
-# will be raised.
+# The function will fail if:
+# - the symlink is broken
+# - the symlink corresponds to a different source file path
+#   from $file_path
+# - the symlink is not a symbolic link
 #
 # Example of usage:
-#    unlink_from "~/myfile" "~/mysymlink"
+#    check_link "~/myfile" "~/mysymlink"
 #
 # Globals:
 #   None
 # Arguments:
 #   file_path ($1)       : The source file path.
-#   symlink_path ($1)    : The destination symlink path
+#   symlink_path ($2)    : The destination symlink path
 #                          (with symlink name included).
 # Returns:
-#   0                    : Successfully unlinked.
+#   0                    : Successfully checked.
+#   NO_FILE_OR_DIRECTORY : $file_path does not exist.
 #   36                   : Symlink exists on a differt source file.
+#   NOT_A_SYMLINK        : Symlink is not a symbolic link.
 # Output:
 #   None
 #######################################
-function unlink_from() {
+function check_link() {
     local file_path=$1
     check_not_null ${file_path}
     local symlink_path=$2
     check_not_null ${symlink_path}
+
+    [[ ! -e "${file_path}" ]] \
+        && { error "The path $file_path does not exist" ; return $NO_FILE_OR_DIRECTORY; }
+
+    [[ -e ${symlink_path} ]] && [[ ! -L ${symlink_path} ]] \
+        && { error "The file $symlink_path is not a symlink" ; return $NOT_A_SYMLINK; }
+
+    [[ ! -e ${symlink_path} ]] && [[ -L ${symlink_path} ]] \
+        && { error "The file $symlink_path is a broken link" ; return $BROKEN_SYMLINK; }
 
     if [[ -e ${symlink_path}  ]]
     then
@@ -585,6 +594,43 @@ function unlink_from() {
         [[ "$symlink_real_path" != "$file_real_path" ]] \
             && { warn "Could not unlink: Symlink ${symlink_path} already exists from source ${symlink_real_path} which is different from $file_real_path"; return 36; }
     fi
+
+    return 0
+}
+
+#######################################
+# Remove the symlink of the given file to the given destination
+# path.
+#
+# The function will fail according to the condition in `check_link` function.
+#
+# The function is idempotent, so calling this function multiple
+# times will unlink the file once.
+#
+# Example of usage:
+#    unlink_from "~/myfile" "~/mysymlink"
+#
+# Globals:
+#   None
+# Arguments:
+#   file_path ($1)       : The source file path.
+#   symlink_path ($2)    : The destination symlink path
+#                          (with symlink name included).
+# Returns:
+#   0                    : Successfully unlinked.
+#   NO_FILE_OR_DIRECTORY : $file_path does not exist.
+#   36                   : Symlink exists on a differt source file.
+#   NOT_A_SYMLINK        : Symlink is not a symbolic link.
+# Output:
+#   None
+#######################################
+function unlink_from() {
+    local file_path=$1
+    check_not_null ${file_path}
+    local symlink_path=$2
+    check_not_null ${symlink_path}
+
+    check_link "${file_path}" "${symlink_path}"
     [[ -L ${symlink_path} ]] && rm -f "${symlink_path}"
 
     return 0
