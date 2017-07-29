@@ -22,5 +22,5 @@ script:
   - bash --version
   - zsh --version
   - fish --version
-  - bash ./tests/checkstyle/checkstyle.sh
-  - bash ./tests/unit-tests/unit-tests.sh
+  - ./tests/bunit/bin/checkstyle.sh ./lib
+  - ./tests/bunit/bin/unit-tests.sh ./tests/unit-tests

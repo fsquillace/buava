@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-source "$(dirname $0)/../utils/utils.sh"
+ROOT_LOCATION="$(dirname $0)/../.."
 
-source "$(dirname $0)/../../lib/utils.sh"
-source "$(dirname $0)/../../lib/trycatch.sh"
+source "$ROOT_LOCATION/tests/bunit/utils/utils.sh"
+
+source "$ROOT_LOCATION/lib/utils.sh"
+source "$ROOT_LOCATION/lib/trycatch.sh"
 
 # Disable the exiterr
 set +e
@@ -93,4 +95,4 @@ function test_try_catch_throw() {
     catch || assertEquals 99 $?
 }
 
-source $(dirname $0)/../utils/shunit2
+source $ROOT_LOCATION/tests/bunit/utils/shunit2

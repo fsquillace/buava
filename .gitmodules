@@ -1,0 +1,3 @@
+[submodule "tests/bunit"]
+	path = tests/bunit
+	url = https://github.com/fsquillace/bunit.git
