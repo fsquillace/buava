@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-source "$(dirname $0)/../utils/utils.sh"
+ROOT_LOCATION="$(dirname $0)/../.."
+
+source "$ROOT_LOCATION/tests/bunit/utils/utils.sh"
 
 # Do NOT remove the next line as you do not want to remove the original
 # HOME directory!
 unset HOME
 export HOME=$(TMPDIR=/tmp mktemp -d -t buava-user-home.XXXXXXX)
 
-source "$(dirname $0)/../../lib/utils.sh"
+source "$ROOT_LOCATION/lib/utils.sh"
 
 # Disable the exiterr
 set +e
@@ -344,11 +346,10 @@ function test_link_to_different_name(){
     assertEquals "Content" "$(cat $HOME/symlinks/binary2)"
 }
 
-function test_link_to_already_existing_real_file(){
+function test_link_to_not_a_symlink(){
     echo "Old content" > $HOME/symlinks/binary
     echo "Content" > $HOME/binary
-    assertCommandFailOnStatus 36 link_to "$HOME/binary" "$HOME/symlinks/binary"
-    assertEquals "Old content" "$(cat $HOME/symlinks/binary)"
+    assertCommandFailOnStatus 44 link_to "$HOME/binary" "$HOME/symlinks/binary"
 }
 
 function test_link_to_already_existing_symlink(){
@@ -364,14 +365,63 @@ function test_link_to_already_existing_broken_symlink(){
     echo "Old content" > $HOME/binary2
     ln -s $HOME/binary2 $HOME/symlinks/binary
     rm $HOME/binary2
-    assertCommandSuccess link_to "$HOME/binary" "$HOME/symlinks/binary"
-    assertEquals "Content" "$(cat $HOME/symlinks/binary)"
+    assertCommandFailOnStatus 45 link_to "$HOME/binary" "$HOME/symlinks/binary"
 }
 
 function test_link_to_already_existing_same_symlink(){
     echo "Content" > $HOME/binary
     ln -s $HOME/binary $HOME/symlinks/binary
     assertCommandSuccess link_to "$HOME/binary" "$HOME/symlinks/binary"
+    assertEquals "Content" "$(cat $HOME/symlinks/binary)"
+}
+
+function test_check_link_null_file_path(){
+    assertCommandFailOnStatus 11 check_link "" "symlink"
+}
+
+function test_check_link_null_symlink_path(){
+    assertCommandFailOnStatus 11 check_link "file" ""
+}
+
+function test_check_link_not_existing_file_path(){
+    assertCommandFailOnStatus 2 check_link "not-exist" "symlink"
+}
+
+function test_check_link(){
+    echo "Content" > $HOME/binary
+    assertCommandSuccess check_link "$HOME/binary" "$HOME/symlinks/binary"
+}
+
+function test_check_link_different_name(){
+    echo "Content" > $HOME/binary
+    assertCommandSuccess check_link "$HOME/binary" "$HOME/symlinks/binary2"
+}
+
+function test_check_link_not_a_symlink(){
+    echo "Old content" > $HOME/symlinks/binary
+    echo "Content" > $HOME/binary
+    assertCommandFailOnStatus 44 check_link "$HOME/binary" "$HOME/symlinks/binary"
+}
+
+function test_check_link_already_existing_symlink(){
+    echo "Content" > $HOME/binary
+    echo "Old content" > $HOME/binary2
+    ln -s $HOME/binary2 $HOME/symlinks/binary
+    assertCommandFailOnStatus 36 check_link "$HOME/binary" "$HOME/symlinks/binary"
+}
+
+function test_check_link_already_existing_broken_symlink(){
+    echo "Content" > $HOME/binary
+    echo "Old content" > $HOME/binary2
+    ln -s $HOME/binary2 $HOME/symlinks/binary
+    rm $HOME/binary2
+    assertCommandFailOnStatus 45 check_link "$HOME/binary" "$HOME/symlinks/binary"
+}
+
+function test_check_link_to_already_existing_same_symlink(){
+    echo "Content" > $HOME/binary
+    ln -s $HOME/binary $HOME/symlinks/binary
+    assertCommandSuccess check_link "$HOME/binary" "$HOME/symlinks/binary"
     assertEquals "Content" "$(cat $HOME/symlinks/binary)"
 }
 
@@ -384,7 +434,7 @@ function test_unlink_from_null_symlink_path(){
 }
 
 function test_unlink_from_not_existing_file_path(){
-    assertCommandSuccess unlink_from "not-exist" "symlink"
+    assertCommandFailOnStatus 2 unlink_from "not-exist" "symlink"
 }
 
 function test_unlink_from(){
@@ -407,11 +457,10 @@ function test_unlink_from_different_name(){
     assertEquals 0 $?
 }
 
-function test_unlink_from_real_file(){
+function test_unlink_from_not_a_symlink(){
     echo "Old content" > $HOME/symlinks/binary
     echo "Content" > $HOME/binary
-    assertCommandFailOnStatus 36 unlink_from "$HOME/binary" "$HOME/symlinks/binary"
-    assertEquals "Old content" "$(cat $HOME/symlinks/binary)"
+    assertCommandFailOnStatus 44 unlink_from "$HOME/binary" "$HOME/symlinks/binary"
 }
 
 function test_unlink_from_symlink(){
@@ -435,14 +484,10 @@ function test_unlink_from_source_as_symlink(){
 
 function test_unlink_from_broken_link(){
     echo "Content" > $HOME/binary
-    ln -s $HOME/binary $HOME/symlinks/binary
-    rm $HOME/binary
-
-    [[ -L "$HOME/symlinks/binary" ]]
-    assertEquals 0 $?
-    assertCommandSuccess unlink_from "$HOME/binary" "$HOME/symlinks/binary"
-    [[ ! -L "$HOME/symlinks/binary" ]]
-    assertEquals 0 $?
+    echo "Old content" > $HOME/binary2
+    ln -s $HOME/binary2 $HOME/symlinks/binary
+    rm $HOME/binary2
+    assertCommandFailOnStatus 45 unlink_from "$HOME/binary" "$HOME/symlinks/binary"
 }
 
 function test_unlink_from_different_source_files(){
@@ -457,4 +502,4 @@ function test_unlink_from_different_source_files(){
     assertEquals 0 $?
 }
 
-source $(dirname $0)/../utils/shunit2
+source $ROOT_LOCATION/tests/bunit/utils/shunit2

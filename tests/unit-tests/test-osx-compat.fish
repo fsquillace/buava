@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-source "$(dirname $0)/../utils/utils.sh"
+ROOT_LOCATION="$(dirname $0)/../.."
+
+source "$ROOT_LOCATION/tests/bunit/utils/utils.sh"
 
 # Disable the exiterr
 set +e
@@ -56,4 +58,4 @@ function test_osx_attempt_command_no_executable() {
     assertCommandFailOnStatus 127 fish_wrapper "source $(dirname $0)/../../lib/osx-compat.fish; set GNUBIN '$GNUBIN'; osx_attempt_command mycmd"
 }
 
-source $(dirname $0)/../utils/shunit2
+source $ROOT_LOCATION/tests/bunit/utils/shunit2
