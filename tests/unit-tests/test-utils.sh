@@ -273,6 +273,11 @@ function test_link_all_programs(){
     assertCommandSuccess unlink git $FILEPATH
     assertEquals "" "$(cat $HOME/.gitconfig)"
 
+    assertCommandSuccess link gtk2 $FILEPATH
+    assertEquals "$(echo -e "include \"$FILEPATH\"")" "$(cat $HOME/.gtkrc-2.0)"
+    assertCommandSuccess unlink gtk2 $FILEPATH
+    assertEquals "" "$(cat $HOME/.gtkrc-2.0)"
+
     assertCommandSuccess link inputrc $FILEPATH
     assertEquals "$(echo -e "\$include $FILEPATH")" "$(cat $HOME/.inputrc)"
     assertCommandSuccess unlink inputrc $FILEPATH
