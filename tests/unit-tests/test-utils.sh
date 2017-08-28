@@ -303,6 +303,11 @@ function test_link_all_programs(){
     assertCommandSuccess unlink vim $FILEPATH
     assertEquals "" "$(cat $HOME/.vimrc)"
 
+    assertCommandSuccess link vimperator $FILEPATH
+    assertEquals "$(echo -e "source $FILEPATH")" "$(cat $HOME/.vimperatorrc)"
+    assertCommandSuccess unlink vimperator $FILEPATH
+    assertEquals "" "$(cat $HOME/.vimperatorrc)"
+
     assertCommandSuccess link zsh $FILEPATH
     assertEquals "$(echo -e "source \"$FILEPATH\"")" "$(cat $HOME/.zshrc)"
     assertCommandSuccess unlink zsh $FILEPATH

@@ -11,6 +11,7 @@ CONFIG_FILES[mutt]="$HOME/.muttrc"
 CONFIG_FILES[screen]="$HOME/.screenrc"
 CONFIG_FILES[tmux]="$HOME/.tmux.conf"
 CONFIG_FILES[vim]="$HOME/.vimrc"
+CONFIG_FILES[vimperator]="$HOME/.vimperatorrc"
 CONFIG_FILES[zsh]="$HOME/.zshrc"
 
 declare -A SOURCE_LINES
@@ -24,6 +25,7 @@ SOURCE_LINES[mutt]="source {}"
 SOURCE_LINES[screen]="source {}"
 SOURCE_LINES[tmux]="source {}"
 SOURCE_LINES[vim]="source {}"
+SOURCE_LINES[vimperator]="source {}"
 SOURCE_LINES[zsh]="source \"{}\""
 
 WGET=wget
