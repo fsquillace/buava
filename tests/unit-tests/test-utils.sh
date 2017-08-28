@@ -513,15 +513,21 @@ function test_unlink_from_different_source_files(){
 }
 
 function test_download(){
-    WGET=/bin/true
-    CURL=/bin/false
+    true_fn() {
+        return 0
+    }
+    false_fn() {
+        return 1
+    }
+    WGET=true_fn
+    CURL=false_fn
     assertCommandSuccess download
 
-    WGET=/bin/false
-    CURL=/bin/true
+    WGET=false_fn
+    CURL=true_fn
     assertCommandSuccess download
 
-    WGET=/bin/false CURL=/bin/false assertCommandFail download
+    WGET=false_fn CURL=false_fn assertCommandFail download
 }
 
 source $ROOT_LOCATION/tests/bunit/utils/shunit2
