@@ -26,6 +26,9 @@ SOURCE_LINES[tmux]="source {}"
 SOURCE_LINES[vim]="source {}"
 SOURCE_LINES[zsh]="source \"{}\""
 
+WGET=wget
+CURL=curl
+
 NULL_EXCEPTION=11
 WRONG_ANSWER=33
 NO_FILE_OR_DIRECTORY=2
@@ -636,4 +639,28 @@ function unlink_from() {
     [[ -L ${symlink_path} ]] && rm -f "${symlink_path}"
 
     return 0
+}
+
+#######################################
+# Download documents using either `wget` or `curl`.
+#
+# The function is a portable solution for downloading files
+# on any OS systems.
+# The default command is `wget` and in case the command fails
+# the function falls back to `curl` command.
+#
+# Example of usage:
+#    download "https://www.mywebsite/myfile.tar.gz"
+#
+# Globals:
+#   None
+# Arguments:
+#   url ($1)          : The source URL.
+# Returns:
+#   -                 : Depends on the backend program used (`wget` or `curl`).
+# Output:
+#   -                 : Depends on the backend program used (`wget` or `curl`).
+#######################################
+function download(){
+    $WGET "$@" || $CURL -L -J -O "$@"
 }
