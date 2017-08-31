@@ -74,25 +74,71 @@ function test_ask_null_question(){
 }
 
 function test_ask(){
-    echo "Y" | ask "Test" &> /dev/null
+    echo "Y" | ask "Test"
     assertEquals 0 $?
-    echo "y" | ask "Test" &> /dev/null
+    echo "y" | ask "Test"
     assertEquals 0 $?
-    echo "N" | ask "Test" &> /dev/null
+    echo "N" | ask "Test"
     assertEquals 1 $?
-    echo "n" | ask "Test" &> /dev/null
+    echo "n" | ask "Test"
     assertEquals 1 $?
-    echo -e "\n" | ask "Test" &> /dev/null
+    echo -e "NoAnswer\nn" | ask "Test"
+    assertEquals 1 $?
+    echo -e "\n" | ask "Test"
     assertEquals 0 $?
-    echo -e "\n" | ask "Test" "N" &> /dev/null
+    echo -e "\n" | ask "Test" "N"
     assertEquals 1 $?
-    echo -e "asdf\n\n" | ask "Test" "N" &> /dev/null
+    echo -e "asdf\n\n" | ask "Test" "N"
     assertEquals 1 $?
 }
 
 function test_ask_wrong_default_answer() {
     echo "Y" | ask "Test" G &> /dev/null
     assertEquals 33 $?
+}
+
+function test_choose_null_question(){
+    assertCommandFailOnStatus 11 choose "" "Red" "Yellow" "Green"
+}
+
+function test_choose_null_default_answer(){
+    assertCommandFailOnStatus 11 choose "???" "" "Yellow" "Green"
+}
+
+function test_choose_null_values(){
+    assertCommandFailOnStatus 11 choose "???" "Red" ""
+}
+
+function test_choose(){
+    local res=$(echo "" | choose "Which color?" "Red" "Yellow" "Green")
+    assertEquals "Red" "$res"
+    local res=$(echo "Yellow" | choose "Which color?" "Red" "Yellow" "Green")
+    assertEquals "Yellow" "$res"
+    local res=$(echo -e "NoColor\nYellow" | choose "Which color?" "Red" "Yellow" "Green")
+    assertEquals "Yellow" "$res"
+    local res=$(echo -e "NoColor" | choose "Which color?" "Red" "Yellow" "Green")
+    assertEquals "Red" "$res"
+}
+
+function test_contains_element(){
+    local array=("apple" "banana" "peach" "ki wi")
+    assertCommandSuccess contains_element "peach" "${array[@]}"
+    assertCommandSuccess contains_element "ki wi" "${array[@]}"
+
+    assertCommandFail contains_element "orange" "${array[@]}"
+}
+
+function test_input_null_question(){
+    assertCommandFailOnStatus 11 input "" "Red"
+}
+
+function test_input(){
+    local res=$(echo "Red" | input "Which color?" "Yellow")
+    assertEquals "Red" "$res"
+    local res=$(echo -e "\n" | input "Which color?" "Yellow")
+    assertEquals "Yellow" "$res"
+    local res=$(echo -e "\n" | input "Which color?")
+    assertEquals "" "$res"
 }
 
 function test_check_and_trap_fail() {
@@ -512,8 +558,13 @@ function test_unlink_from_different_source_files(){
     assertEquals 0 $?
 }
 
+function test_download_null_url(){
+    assertCommandFailOnStatus 11 download ""
+}
+
 function test_download(){
     true_fn() {
+        echo "$@"
         return 0
     }
     false_fn() {
@@ -521,13 +572,24 @@ function test_download(){
     }
     WGET=true_fn
     CURL=false_fn
-    assertCommandSuccess download
+    assertCommandSuccess download "http://sdf.com"
+    assertEquals "http://sdf.com" "$(cat $STDOUTF)"
+    assertCommandSuccess download "http://sdf.com" "myfile"
+    assertEquals "-O myfile http://sdf.com" "$(cat $STDOUTF)"
 
     WGET=false_fn
     CURL=true_fn
-    assertCommandSuccess download
+    assertCommandSuccess download "http://sdf.com"
+    assertEquals "-L -J -O http://sdf.com" "$(cat $STDOUTF)"
+    assertCommandSuccess download "http://sdf.com" "myfile"
+    assertEquals "-L -o myfile http://sdf.com" "$(cat $STDOUTF)"
 
-    WGET=false_fn CURL=false_fn assertCommandFail download
+    WGET=false_fn
+    CURL=false_fn
+    assertCommandFail download "http://sdf.com"
+    assertEquals "" "$(cat $STDOUTF)"
+    assertCommandFail download "http://sdf.com" "myfile"
+    assertEquals "" "$(cat $STDOUTF)"
 }
 
 source $ROOT_LOCATION/tests/bunit/utils/shunit2

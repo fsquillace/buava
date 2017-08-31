@@ -239,13 +239,18 @@ function normal(){
 
 #######################################
 # Ask a question and wait to receive an answer from stdin.
-# It returns $default_answer if no answer has be received from stdin.
+# It returns $default_answer if no answer has been received from stdin.
+#
+# Example of usage:
+#
+# ask "Would you like the ice cream?" "N"
+# Would you like the ice cream? (N/y)> _
 #
 # Globals:
 #   None
 # Arguments:
 #   question ($1)       : The question to ask.
-#   default_answer ($2) : Possible values: 'Y', 'y', 'N', 'n' (default: 'Y')
+#   default_answer ($2?) : Possible values: 'Y', 'y', 'N', 'n' (default: 'Y')
 # Returns:
 #   0                   : If user replied with either 'Y' or 'y'.
 #   1                   : If user replied with either 'N' or 'n'.
@@ -258,30 +263,137 @@ function ask(){
     local default_answer=$2
     check_not_null $question
 
-    if [ ! -z "$default_answer" ]
+    if [[ ! -z "$default_answer" ]]
     then
         local answers="Y y N n"
         [[ "$answers" =~ "$default_answer" ]] || { error "The default answer: $default_answer is wrong."; return $WRONG_ANSWER; }
     fi
 
     local default="Y"
-    [ -z "$default_answer" ] || default=$(echo "$default_answer" | tr '[:lower:]' '[:upper:]')
+    [[ -z "$default_answer" ]] || default=$(echo "$default_answer" | tr '[:lower:]' '[:upper:]')
 
     local other="n"
-    [ "$default" == "N" ] && other="y"
+    [[ "$default" == "N" ]] && other="y"
 
     local prompt=$(info "$question (${default}/${other})> ")
 
     local res="none"
-    while [ "$res" != "Y" ] && [ "$res" != "N"  ] && [ "$res" != "" ];
+    while [[ "$res" != "Y" ]] && [[ "$res" != "N"  ]] && [[ "$res" != "" ]];
     do
         read -p "$prompt" res
         res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
     done
 
-    [ "$res" == "" ] && res="$default"
+    [[ "$res" == "" ]] && res="$default"
 
-    [ "$res" == "Y" ]
+    [[ "$res" == "Y" ]]
+}
+
+#######################################
+# Ask a question and wait to receive an answer from stdin between the possible values.
+# It returns $default_answer if no answer has been received from stdin.
+#
+# Example of usage:
+#
+# choose "Which color do you like?" "Red" "Black" "Yellow" "Red" "Green"
+# Which color do you like? (default: Red).
+# Possible values: Black Yellow Red Green> _
+#
+# Globals:
+#   None
+# Arguments:
+#   question ($1)       : The question to ask.
+#   default_answer ($2) : The default answer if no input is given
+#   values ($3-)        : The possible allowed values.
+# Returns:
+#   -
+# Output:
+#   The input specified by the user or the default input.
+#######################################
+function choose(){
+    local question=$1
+    local default_answer=$2
+    shift 2
+    local values=("$@")
+    check_not_null $question
+    check_not_null $default_answer
+    check_not_null $values
+
+    local prompt=$(info "$question (default: ${default_answer})\nPossible values: ${values[@]}> ")
+
+    local res
+    read -p "$prompt" res
+    while ! contains_element "$res" "${values[@]}" && [[ "$res" != "" ]];
+    do
+        read -p "$prompt" res
+    done
+
+    [[ "$res" == "" ]] && res="$default_answer"
+
+    echo "$res"
+}
+
+#######################################
+# Check if an array contains a certain value.
+#
+# Example of usage:
+#
+# contains_element "Red" "Yellow" "Green" "Red"
+#
+# Globals:
+#   None
+# Arguments:
+#   match ($1)          : The search string.
+#   array ($2-)         : The array elements.
+# Returns:
+#   0                   : The array contains the element.
+#   0                   : The array does not contain the element.
+# Output:
+#   -
+#######################################
+function contains_element () {
+  local match="$1"
+  shift
+  local e
+  for e in "$@"
+  do
+      [[ "$e" == "$match" ]] && return 0
+  done
+  return 1
+}
+
+#######################################
+# Ask a question and wait to receive an input from stdin.
+# It returns $default_input if no input has been received from stdin.
+#
+# Example of usage:
+#
+# input "Which city do you like?" "Rome"
+# Which city do you like? (default: Rome)> _
+#
+# Globals:
+#   None
+# Arguments:
+#   question ($1)        : The question to ask.
+#   default_input ($2?)  : The default input (Default '').
+# Returns:
+#   -
+# Output:
+#   The input specified by the user or the default input.
+#######################################
+function input(){
+    local question=$1
+    local default_input=$2
+    check_not_null $question
+
+    local prompt=$(info "${question} (default: ${default_input})> ")
+
+    local res=""
+    read -p "$prompt" res
+
+    [[ "$res" == "" ]] && res="$default_input"
+
+    echo "$res"
 }
 
 #######################################
@@ -652,17 +764,27 @@ function unlink_from() {
 # the function falls back to `curl` command.
 #
 # Example of usage:
-#    download "https://www.mywebsite/myfile.tar.gz"
+#    download "https://www.mywebsite/myfile.tar.gz" "compress.tar.gz"
 #
 # Globals:
 #   None
 # Arguments:
 #   url ($1)          : The source URL.
+#   filename ($2?)    : Write output to the specified filename instead of the remote filename.
 # Returns:
 #   -                 : Depends on the backend program used (`wget` or `curl`).
 # Output:
 #   -                 : Depends on the backend program used (`wget` or `curl`).
 #######################################
 function download(){
-    $WGET "$@" || $CURL -L -J -O "$@"
+    local url="$1"
+    local filename="$2"
+    check_not_null "$url"
+
+    if [[ -z $filename ]]
+    then
+        $WGET "$url" || $CURL -L -J -O "$url"
+    else
+        $WGET -O "$filename" "$url" || $CURL -L -o "$filename" "$url"
+    fi
 }
