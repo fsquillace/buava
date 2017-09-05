@@ -277,9 +277,12 @@ function ask(){
 
     local prompt=$(info "$question (${default}/${other})> ")
 
-    local res="none"
+    local res
+    read -p "$prompt" res
+    res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
     while [[ "$res" != "Y" ]] && [[ "$res" != "N"  ]] && [[ "$res" != "" ]];
     do
+        warn "The chosen value is not correct. Type again...\n"
         read -p "$prompt" res
         res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
     done
@@ -319,18 +322,30 @@ function choose(){
     check_not_null $default_answer
     check_not_null $values
 
-    local prompt=$(info "$question (default: ${default_answer})\nPossible values: ${values[@]}> ")
+    local values_text=""
+    for i in "${!values[@]}"
+    do
+        values_text="$values_text  $i) ${values[$i]}"
+    done
+
+    local prompt=$(info "$question\n\n$values_text\n\nEnter a number (default value: ${default_answer})> ")
 
     local res
     read -p "$prompt" res
-    while ! contains_element "$res" "${values[@]}" && [[ "$res" != "" ]];
+    local regex='^[0-9]+$'
+    while ( [[ $res -ge ${#values[@]} ]] || [[ $res -lt 0 ]] || ! [[ $res =~ $regex ]] ) && [[ "$res" != "" ]]
     do
+        warn "The chosen value is not correct. Type again...\n"
         read -p "$prompt" res
     done
 
-    [[ "$res" == "" ]] && res="$default_answer"
+    if [[ "$res" == "" ]]
+    then
+        echo "$default_answer"
+    else
+        echo "${values[$res]}"
+    fi
 
-    echo "$res"
 }
 
 #######################################

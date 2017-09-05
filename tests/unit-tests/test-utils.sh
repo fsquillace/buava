@@ -82,13 +82,13 @@ function test_ask(){
     assertEquals 1 $?
     echo "n" | ask "Test"
     assertEquals 1 $?
-    echo -e "NoAnswer\nn" | ask "Test"
+    echo -e "NoAnswer\nn" | ask "Test" 2> /dev/null
     assertEquals 1 $?
     echo -e "\n" | ask "Test"
     assertEquals 0 $?
     echo -e "\n" | ask "Test" "N"
     assertEquals 1 $?
-    echo -e "asdf\n\n" | ask "Test" "N"
+    echo -e "asdf\n\n" | ask "Test" "N" 2> /dev/null
     assertEquals 1 $?
 }
 
@@ -112,12 +112,18 @@ function test_choose_null_values(){
 function test_choose(){
     local res=$(echo "" | choose "Which color?" "Red" "Yellow" "Green")
     assertEquals "Red" "$res"
-    local res=$(echo "Yellow" | choose "Which color?" "Red" "Yellow" "Green")
+    local res=$(echo "0" | choose "Which color?" "Red" "Yellow" "Green")
     assertEquals "Yellow" "$res"
-    local res=$(echo -e "NoColor\nYellow" | choose "Which color?" "Red" "Yellow" "Green")
+    local res=$(echo -e "NoColor\n0" | choose "Which color?" "Red" "Yellow" "Green" 2> /dev/null)
     assertEquals "Yellow" "$res"
-    local res=$(echo -e "NoColor" | choose "Which color?" "Red" "Yellow" "Green")
+    local res=$(echo -e "NoColor" | choose "Which color?" "Red" "Yellow" "Green" 2> /dev/null)
     assertEquals "Red" "$res"
+    local res=$(echo -e "-1\n1" | choose "Which color?" "Red" "Yellow" "Green" 2> /dev/null)
+    assertEquals "Green" "$res"
+    local res=$(echo -e "9\n1" | choose "Which color?" "Red" "Yellow" "Green" 2> /dev/null)
+    assertEquals "Green" "$res"
+    local res=$(echo -e "notnumber\n1" | choose "Which color?" "Red" "Yellow" "Green" 2> /dev/null)
+    assertEquals "Green" "$res"
 }
 
 function test_contains_element(){
