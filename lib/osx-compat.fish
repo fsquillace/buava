@@ -7,6 +7,7 @@
 # vim: ft=sh
 
 set GNUBIN "/usr/local/opt/coreutils/libexec/gnubin"
+set UNAME "uname"
 
 #######################################
 # Update PATH variable environment with the GNUBIN directory.
@@ -51,11 +52,34 @@ end
 #   -            : The command output.
 #######################################
 function osx_attempt_command
-    set cmd $argv[1]
+    set -l cmd $argv[1]
     set --erase argv[1]
     if [ -x "$GNUBIN/$cmd" ]
         eval "$GNUBIN/$cmd" $argv
     else
         eval $cmd $argv
+    end
+end
+
+
+#######################################
+# Detect whether the function runs in a OSX os or not.
+#
+# Globals:
+#   UNAME (RO)   : The UNAME command.
+# Arguments:
+#   None
+# Returns:
+#   0            : If the function runs in OSX
+#   1            : If the function does not run in OSX
+# Output:
+#   -            : The command output.
+#######################################
+function osx_detect
+    set -l uname_res (eval $UNAME)
+    if [ $uname_res = 'Darwin' ]
+        return 0
+    else
+        return 1
     end
 end

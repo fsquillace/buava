@@ -58,4 +58,11 @@ function test_osx_attempt_command_no_executable() {
     assertCommandFailOnStatus 127 fish_wrapper "source $(dirname $0)/../../lib/osx-compat.fish; set GNUBIN '$GNUBIN'; osx_attempt_command mycmd"
 }
 
+function test_osx_detect() {
+    assertCommandSuccess fish_wrapper "source $(dirname $0)/../../lib/osx-compat.fish; function uname_cmd; echo Darwin; end; set UNAME uname_cmd; osx_detect"
+}
+
+function test_osx_detect_fail() {
+    assertCommandFailOnStatus 1 fish_wrapper "source $(dirname $0)/../../lib/osx-compat.fish; function uname_cmd; echo Linux; end; set UNAME uname_cmd; osx_detect"
+}
 source $ROOT_LOCATION/tests/bunit/utils/shunit2

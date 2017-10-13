@@ -60,4 +60,20 @@ function test_osx_attempt_command_no_executable() {
     assertCommandFailOnStatus 127 osx_attempt_command mycmd
 }
 
+function test_osx_detect() {
+    uname_cmd(){
+        echo 'Darwin'
+    }
+    UNAME=uname_cmd
+    assertCommandSuccess osx_detect
+}
+
+function test_osx_detect_fail() {
+    uname_cmd(){
+        echo 'Linux'
+    }
+    UNAME=uname_cmd
+    assertCommandFailOnStatus 1 osx_detect
+}
+
 source $ROOT_LOCATION/tests/bunit/utils/shunit2

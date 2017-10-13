@@ -7,6 +7,7 @@
 # vim: ft=sh
 
 GNUBIN="/usr/local/opt/coreutils/libexec/gnubin"
+UNAME="uname"
 
 #######################################
 # Update PATH variable environment with the GNUBIN directory.
@@ -59,4 +60,22 @@ function osx_attempt_command() {
     else
         $cmd $@
     fi
+}
+
+
+#######################################
+# Detect whether the function runs in a OSX os or not.
+#
+# Globals:
+#   UNAME (RO)   : The UNAME command.
+# Arguments:
+#   None
+# Returns:
+#   0            : If the function runs in OSX
+#   1            : If the function does not run in OSX
+# Output:
+#   -            : The command output.
+#######################################
+function osx_detect() {
+    [[ $($UNAME) == 'Darwin' ]]
 }
