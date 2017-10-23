@@ -345,6 +345,11 @@ function test_link_all_programs(){
     assertCommandSuccess unlink screen $FILEPATH
     assertEquals "" "$(cat $HOME/.screenrc)"
 
+    assertCommandSuccess link ssh $FILEPATH
+    assertEquals "$(echo -e "Include $FILEPATH")" "$(cat $HOME/.ssh/config)"
+    assertCommandSuccess unlink ssh $FILEPATH
+    assertEquals "" "$(cat $HOME/.ssh/config)"
+
     assertCommandSuccess link tmux $FILEPATH
     assertEquals "$(echo -e "source $FILEPATH")" "$(cat $HOME/.tmux.conf)"
     assertCommandSuccess unlink tmux $FILEPATH
