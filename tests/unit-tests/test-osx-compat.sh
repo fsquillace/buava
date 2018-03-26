@@ -60,6 +60,16 @@ function test_osx_attempt_command_no_executable() {
     assertCommandFailOnStatus 127 osx_attempt_command mycmd
 }
 
+function test_osx_attempt_command_on_gnubin_with_spaces() {
+    cat <<EOF > $GNUBIN/mycmd
+#!/bin/bash
+echo "\$1"
+EOF
+    chmod +x $GNUBIN/mycmd
+    assertCommandSuccess osx_attempt_command mycmd this\ is\ one
+    assertEquals "this is one" "$(cat $STDOUTF)"
+}
+
 function test_osx_detect() {
     uname_cmd(){
         echo 'Darwin'

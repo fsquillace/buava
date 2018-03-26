@@ -56,9 +56,9 @@ function osx_attempt_command() {
     shift
     if [ -x "$GNUBIN/$cmd" ]
     then
-        "$GNUBIN/$cmd" $@
+        "$GNUBIN/$cmd" "$@"
     else
-        $cmd $@
+        $cmd "$@"
     fi
 }
 
