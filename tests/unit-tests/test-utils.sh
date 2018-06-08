@@ -603,4 +603,62 @@ function test_download(){
     assertEquals "" "$(cat $STDOUTF)"
 }
 
+function test_install_or_update_git_repo_null_arguments(){
+    assertCommandFailOnStatus 11 install_or_update_git_repo "http://myrepo"
+    assertCommandFailOnStatus 11 install_or_update_git_repo "http://myrepo" "$HOME/mydir"
+}
+
+function test_install_git_repo_null_arguments(){
+    assertCommandFailOnStatus 11 install_git_repo "http://myrepo"
+    assertCommandFailOnStatus 11 install_git_repo "http://myrepo" "$HOME/mydir"
+}
+
+function test_update_git_repo_null_arguments(){
+    assertCommandFailOnStatus 11 update_git_repo "$HOME/mydir"
+}
+
+function test_install_or_update_git_repo_create_quiet(){
+    git_cmd() {
+        [[ $1 == "clone" ]] && mkdir -p "${@: -1}"
+        echo git $@
+        return 0
+    }
+    GIT=git_cmd
+    assertCommandSuccess install_or_update_git_repo "http://myrepo" "$HOME/mydir" "master"
+    assertEquals "$(echo -e "git clone --quiet http://myrepo $HOME/mydir\ngit submodule --quiet update --init --recursive\ngit --no-pager log -n 3 --no-merges --pretty=tformat: - %s (%ar)\ngit checkout --quiet master")" "$(cat $STDOUTF)"
+}
+
+function test_install_or_update_git_repo_create(){
+    git_cmd() {
+        [[ $1 == "clone" ]] && mkdir -p "${@: -1}"
+        echo git $@
+        return 0
+    }
+    GIT=git_cmd
+    assertCommandSuccess install_or_update_git_repo "http://myrepo" "$HOME/mydir" "master" false
+    assertEquals "$(echo -e "git clone http://myrepo $HOME/mydir\ngit submodule update --init --recursive\ngit --no-pager log -n 3 --no-merges --pretty=tformat: - %s (%ar)\ngit checkout master")" "$(cat $STDOUTF)"
+}
+
+function test_install_or_update_git_repo_update_quiet(){
+    git_cmd() {
+        echo git $@
+        return 0
+    }
+    GIT=git_cmd
+    mkdir -p "$HOME/mydir"
+    assertCommandSuccess install_or_update_git_repo "http://myrepo" "$HOME/mydir" "master"
+    assertEquals "$(echo -e "git fetch --quiet --all\ngit reset --quiet --hard origin/master\ngit submodule --quiet update --init --recursive\ngit --no-pager log --no-merges --pretty=tformat: - %s (%ar) git rev-parse HEAD..HEAD\ngit checkout --quiet master")" "$(cat $STDOUTF)"
+}
+
+function test_install_or_update_git_repo_update(){
+    git_cmd() {
+        echo git $@
+        return 0
+    }
+    GIT=git_cmd
+    mkdir -p "$HOME/mydir"
+    assertCommandSuccess install_or_update_git_repo "http://myrepo" "$HOME/mydir" "master" false
+    assertEquals "$(echo -e "git fetch --all\ngit reset --hard origin/master\ngit submodule update --init --recursive\ngit --no-pager log --no-merges --pretty=tformat: - %s (%ar) git rev-parse HEAD..HEAD\ngit checkout master")" "$(cat $STDOUTF)"
+}
+
 source $ROOT_LOCATION/tests/bunit/utils/shunit2
