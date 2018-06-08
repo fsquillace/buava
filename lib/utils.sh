@@ -32,6 +32,7 @@ SOURCE_LINES[zsh]="source \"{}\""
 
 WGET=wget
 CURL=curl
+GIT=git
 
 NULL_EXCEPTION=11
 WRONG_ANSWER=33
@@ -804,4 +805,125 @@ function download(){
     else
         $WGET -O "$filename" "$url" || $CURL -L -o "$filename" "$url"
     fi
+}
+
+
+#######################################
+# Either install or update a git repository providing information about
+# the latest git commit messages.
+#
+# Example of usage:
+#    install_or_update_git_repo "https://github.com/myname/myrepo" "/path/to/my/repo" "master"
+#
+# Globals:
+#   None
+# Arguments:
+#   url ($1)          : Git URL.
+#   dir_path ($2)     : Directory path.
+#   branch_name ($3)  : Name of the branch to checkout
+#   quiet ($4?)       : If true, suppress the git logs and
+#                       shows the latest three commit message updates only
+#                       (Default: true).
+# Returns:
+#   None
+# Output:
+#   Logs from git commands.
+#######################################
+function install_or_update_git_repo(){
+    local url="$1"
+    check_not_null "$url"
+    local dir_path="$2"
+    check_not_null "$dir_path"
+    local branch_name="$3"
+    check_not_null "$branch_name"
+    local quiet="$4"
+
+    if [[ -d $dir_path ]]; then
+        update_git_repo "$dir_path" "$branch_name" $quiet
+    else
+        install_git_repo "$url" "$dir_path" "$branch_name" $quiet
+    fi
+}
+
+#######################################
+# Install a git repository providing information about
+# the latest git commit messages.
+#
+# Example of usage:
+#    install_git_repo "https://github.com/myname/myrepo" "/path/to/my/repo" "master"
+#
+# Globals:
+#   None
+# Arguments:
+#   url ($1)          : Git URL.
+#   dir_path ($2)     : Directory path.
+#   branch_name ($3)  : Name of the branch to checkout
+#   quiet ($4?)       : If true, suppress the git logs and
+#                       shows the latest three commit message updates only
+#                       (Default: true).
+# Returns:
+#   None
+# Output:
+#   Logs from git commands.
+#######################################
+function install_git_repo(){
+    local url="$1"
+    check_not_null "$url"
+    local dir_path="$2"
+    check_not_null "$dir_path"
+    local branch_name="$3"
+    check_not_null "$branch_name"
+    local quiet="$4"
+    [[ -z $quiet ]] && quiet=true
+    local quiet_opt=""
+    $quiet && local quiet_opt="--quiet"
+
+    last_pwd="$PWD"
+    $GIT clone $quiet_opt "$url" "$dir_path"
+    cd "$dir_path"
+    $GIT submodule $quiet_opt update --init --recursive
+    $GIT --no-pager log -n 3 --no-merges --pretty="tformat:    - %s (%ar)"
+    $GIT checkout $quiet_opt $branch_name
+    cd "$last_pwd"
+}
+
+#######################################
+# Update a git repository providing information about
+# the latest git commit messages.
+#
+# Example of usage:
+#    update_git_repo "/path/to/my/repo" "master"
+#
+# Globals:
+#   None
+# Arguments:
+#   dir_path ($1)     : Directory path.
+#   branch_name ($2)  : Name of the branch to checkout
+#   quiet ($3?)       : If true, suppress the git logs and
+#                       shows the latest three commit message updates only
+#                       (Default: true).
+# Returns:
+#   None
+# Output:
+#   Logs from git commands.
+#######################################
+function update_git_repo(){
+    local dir_path="$1"
+    check_not_null "$dir_path"
+    local branch_name="$2"
+    check_not_null "$branch_name"
+    local quiet="$3"
+    [[ -z $quiet ]] && quiet=true
+    local quiet_opt=""
+    $quiet && local quiet_opt="--quiet"
+
+    last_pwd="$PWD"
+    cd "$dir_path"
+    local last_commit=$($GIT rev-parse HEAD)
+    $GIT fetch $quiet_opt --all
+    $GIT reset $quiet_opt --hard origin/$branch_name
+    $GIT submodule $quiet_opt update --init --recursive
+    $GIT --no-pager log --no-merges --pretty="tformat:    - %s (%ar)" $last_commit..HEAD
+    $GIT checkout $quiet_opt $branch_name
+    cd "$last_pwd"
 }
