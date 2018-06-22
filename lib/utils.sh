@@ -820,7 +820,8 @@ function download(){
 # Arguments:
 #   url ($1)          : Git URL.
 #   dir_path ($2)     : Directory path.
-#   branch_name ($3)  : Name of the branch to checkout
+#   branch_name ($3?) : Name of the branch to checkout
+#                       (If empty "" it defaults to repository's HEAD).
 #   quiet ($4?)       : If true, suppress the git logs and
 #                       shows the latest three commit message updates only
 #                       (Default: true).
@@ -835,7 +836,6 @@ function install_or_update_git_repo(){
     local dir_path="$2"
     check_not_null "$dir_path"
     local branch_name="$3"
-    check_not_null "$branch_name"
     local quiet="$4"
 
     if [[ -d $dir_path ]]; then
@@ -857,7 +857,8 @@ function install_or_update_git_repo(){
 # Arguments:
 #   url ($1)          : Git URL.
 #   dir_path ($2)     : Directory path.
-#   branch_name ($3)  : Name of the branch to checkout
+#   branch_name ($3?) : Name of the branch to checkout
+#                       (If empty "" it defaults to repository's HEAD).
 #   quiet ($4?)       : If true, suppress the git logs and
 #                       shows the latest three commit message updates only
 #                       (Default: true).
@@ -872,7 +873,6 @@ function install_git_repo(){
     local dir_path="$2"
     check_not_null "$dir_path"
     local branch_name="$3"
-    check_not_null "$branch_name"
     local quiet="$4"
     [[ -z $quiet ]] && quiet=true
     local quiet_opt=""
@@ -883,7 +883,7 @@ function install_git_repo(){
     cd "$dir_path"
     $GIT submodule $quiet_opt update --init --recursive
     $GIT --no-pager log -n 3 --no-merges --pretty="tformat:    - %s (%ar)"
-    $GIT checkout $quiet_opt $branch_name
+    [[ -z $branch_name ]] || $GIT checkout $quiet_opt $branch_name
     cd "$last_pwd"
 }
 
@@ -898,7 +898,8 @@ function install_git_repo(){
 #   None
 # Arguments:
 #   dir_path ($1)     : Directory path.
-#   branch_name ($2)  : Name of the branch to checkout
+#   branch_name ($2?) : Name of the branch to checkout
+#                       (If empty "" it defaults to repository's HEAD).
 #   quiet ($3?)       : If true, suppress the git logs and
 #                       shows the latest three commit message updates only
 #                       (Default: true).
@@ -911,7 +912,6 @@ function update_git_repo(){
     local dir_path="$1"
     check_not_null "$dir_path"
     local branch_name="$2"
-    check_not_null "$branch_name"
     local quiet="$3"
     [[ -z $quiet ]] && quiet=true
     local quiet_opt=""
@@ -921,9 +921,14 @@ function update_git_repo(){
     cd "$dir_path"
     local last_commit=$($GIT rev-parse HEAD)
     $GIT fetch $quiet_opt --all
-    $GIT reset $quiet_opt --hard origin/$branch_name
+    if [[ -z $branch_name ]]
+    then
+        $GIT reset $quiet_opt --hard @{upstream}
+    else
+        $GIT reset $quiet_opt --hard origin/$branch_name
+    fi
     $GIT submodule $quiet_opt update --init --recursive
     $GIT --no-pager log --no-merges --pretty="tformat:    - %s (%ar)" $last_commit..HEAD
-    $GIT checkout $quiet_opt $branch_name
+    [[ -z $branch_name ]] || $GIT checkout $quiet_opt $branch_name
     cd "$last_pwd"
 }
