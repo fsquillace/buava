@@ -932,3 +932,59 @@ function update_git_repo(){
     [[ -z $branch_name ]] || $GIT checkout $quiet_opt $branch_name
     cd "$last_pwd"
 }
+
+
+#######################################
+# Simplify the interactive procedure to create configuration file
+# or skip it.
+# If the configuration file already exists the function will give
+# the option to either re-use the existing configuration or remove it.
+#
+# Globals:
+#   None
+# Arguments:
+#   conf_file_path ($1)     : Path of the config file to manage
+#   new_conf_func ($2)      : function which creates the config file
+#   apply_conf_func ($3)    : function which apply the config file
+#   unapply_conf_func ($4)  : function which unapply the config file
+# Returns:
+#   None
+# Output:
+#   Output for choosing the options
+#######################################
+function setup_configuration() {
+    local conf_file_path="$1"
+    check_not_null "$conf_file_path"
+    local new_conf_func="$2"
+    check_not_null "$new_conf_func"
+    local apply_conf_func="$3"
+    check_not_null "$apply_conf_func"
+    local unapply_conf_func="$4"
+    check_not_null "$unapply_conf_func"
+
+    local answers=("Create new" "Skip")
+    local default_answer="Skip"
+    [[ -e $conf_file_path ]] && { \
+        local answers=("Create new" "Remove existing" "Apply existing")
+        default_answer="Apply existing"
+    }
+    local chosen=$(choose "Choose option about configuration" "${default_answer}" "${answers[@]}")
+
+    [[ $chosen == "Skip" ]] && { \
+        $unapply_conf_func
+        return 0
+    }
+    [[ $chosen == "Remove existing" ]] && { \
+        $unapply_conf_func
+        return 0
+    }
+    [[ $chosen == "Apply existing" ]] && { \
+        $apply_conf_func
+        return 0
+    }
+
+    $new_conf_func
+    $apply_conf_func
+
+    return 0
+}

@@ -683,4 +683,55 @@ function test_install_or_update_git_repo_update(){
     assertEquals "$(echo -e "git fetch --all\ngit reset --hard origin/master\ngit submodule update --init --recursive\ngit --no-pager log --no-merges --pretty=tformat: - %s (%ar) git rev-parse HEAD..HEAD\ngit checkout master")" "$(cat $STDOUTF)"
 }
 
+function test_setup_configuration_null_arg(){
+    assertCommandFailOnStatus 11 setup_configuration
+    assertCommandFailOnStatus 11 setup_configuration "file_path"
+    assertCommandFailOnStatus 11 setup_configuration "file_path" "new_conf"
+    assertCommandFailOnStatus 11 setup_configuration "file_path" "new_conf" \
+        "apply_conf"
+}
+
+function test_setup_configuration(){
+    local conf_file_path="$HOME/myconffile"
+    new_conf(){
+        echo "new_conf"
+    }
+    apply_conf(){
+        echo "apply_conf"
+    }
+    unapply_conf(){
+        echo "unapply_conf"
+    }
+
+    echo "1" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "unapply_conf" "$(cat $STDOUTF)"
+
+    echo -e "\n" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "unapply_conf" "$(cat $STDOUTF)"
+
+    echo "0" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "$(echo -e "new_conf\napply_conf")" "$(cat $STDOUTF)"
+
+    touch $conf_file_path
+
+    echo -e "\n" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "apply_conf" "$(cat $STDOUTF)"
+
+    echo -e "1" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "unapply_conf" "$(cat $STDOUTF)"
+
+    echo "0" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "$(echo -e "new_conf\napply_conf")" "$(cat $STDOUTF)"
+
+    echo "2" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "$(echo -e "apply_conf")" "$(cat $STDOUTF)"
+}
+
 source $ROOT_LOCATION/tests/bunit/utils/shunit2
