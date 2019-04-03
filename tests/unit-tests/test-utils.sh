@@ -330,6 +330,11 @@ function test_link_all_programs(){
     assertCommandSuccess unlink gtk2 $FILEPATH
     assertEquals "" "$(cat $HOME/.gtkrc-2.0)"
 
+    assertCommandSuccess link "gvim" $FILEPATH
+    assertEquals "$(echo -e "source $FILEPATH")" "$(cat $HOME/.gvimrc)"
+    assertCommandSuccess unlink gvim $FILEPATH
+    assertEquals "" "$(cat $HOME/.gvimrc)"
+
     assertCommandSuccess link inputrc $FILEPATH
     assertEquals "$(echo -e "\$include $FILEPATH")" "$(cat $HOME/.inputrc)"
     assertCommandSuccess unlink inputrc $FILEPATH

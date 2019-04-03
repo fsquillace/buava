@@ -6,6 +6,7 @@ CONFIG_FILES[emacs]="$HOME/.emacs"
 CONFIG_FILES[fish]="$HOME/.config/fish/config.fish"
 CONFIG_FILES[git]="$HOME/.gitconfig"
 CONFIG_FILES[gtk2]="$HOME/.gtkrc-2.0"
+CONFIG_FILES[gvim]="$HOME/.gvimrc"
 CONFIG_FILES[inputrc]="$HOME/.inputrc"
 CONFIG_FILES[mutt]="$HOME/.muttrc"
 CONFIG_FILES[screen]="$HOME/.screenrc"
@@ -21,6 +22,7 @@ SOURCE_LINES[emacs]="(load-file \"{}\")"
 SOURCE_LINES[fish]="source \"{}\""
 SOURCE_LINES[git]="[include] path = \"{}\""
 SOURCE_LINES[gtk2]="include \"{}\""
+SOURCE_LINES[gvim]="source {}"
 SOURCE_LINES[inputrc]="\$include {}"
 SOURCE_LINES[mutt]="source {}"
 SOURCE_LINES[screen]="source {}"
@@ -303,7 +305,13 @@ function ask(){
 #
 # choose "Which color do you like?" "Red" "Black" "Yellow" "Red" "Green"
 # Which color do you like? (default: Red).
-# Possible values: Black Yellow Red Green> _
+#
+# 0) Black
+# 1) Yellow
+# 2) Red
+# 3) Green
+#
+# Enter a number (default value: Red)>
 #
 # Globals:
 #   None
@@ -328,21 +336,21 @@ function choose(){
     local values_text=""
     for i in "${!values[@]}"
     do
-        values_text="$values_text  $i) ${values[$i]}"
+        values_text="$values_text\n$i) ${values[$i]}"
     done
 
-    local prompt=$(info "$question\n\n$values_text\n\nEnter a number (default value: ${default_answer})> ")
+    local prompt=$(info "$question\n$values_text\n\nEnter a number (default value: ${default_answer})> ")
 
     local res
     read -p "$prompt" res
     local regex='^[0-9]+$'
-    while ( [[ $res -ge ${#values[@]} ]] || [[ $res -lt 0 ]] || ! [[ $res =~ $regex ]] ) && [[ "$res" != "" ]]
+    while [[ "$res" != "" ]] && ( ! [[ "$res" =~ $regex ]] || [[ "$res" -ge ${#values[@]} ]] || [[ "$res" -lt 0 ]] )
     do
         warn "The chosen value is not correct. Type again...\n"
         read -p "$prompt" res
     done
 
-    if [[ "$res" == "" ]]
+    if [[ -z "$res" ]]
     then
         echo "$default_answer"
     else
