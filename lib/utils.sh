@@ -32,9 +32,10 @@ SOURCE_LINES[vim]="source {}"
 SOURCE_LINES[vimperator]="source {}"
 SOURCE_LINES[zsh]="source \"{}\""
 
-WGET=wget
 CURL=curl
 GIT=git
+VIM=vim
+WGET=wget
 
 NULL_EXCEPTION=11
 WRONG_ANSWER=33
@@ -813,6 +814,44 @@ function download(){
     else
         $WGET -O "$filename" "$url" || $CURL -L -o "$filename" "$url"
     fi
+}
+
+#######################################
+# Either install or update a vim plugin in git repository
+# providing information about the latest git commit messages.
+#
+# Example of usage:
+#    install_or_update_vim_plugin_git_repo "https://github.com/myname/myplugin" "/path/to/my/repo" "master"
+#
+# Globals:
+#   None
+# Arguments:
+#   url ($1)          : Git URL
+#   plugin_path ($2)  : Location where the plugin
+#                       will be installed
+#   branch_name ($3?) : Name of the branch to checkout
+#                       (If empty "" it defaults to repository's HEAD).
+#   quiet ($4?)       : If true, suppress the git logs and
+#                       shows the latest three commit message updates only
+#                       (Default: true).
+# Returns:
+#   None
+# Output:
+#   Logs from git commands.
+#######################################
+function install_or_update_vim_plugin_git_repo(){
+    local url="$1"
+    check_not_null "$url"
+    local plugin_path="$2"
+    check_not_null "$plugin_path"
+    local branch_name="$3"
+    local quiet="$4"
+
+    install_or_update_git_repo $url "$plugin_path" $branch_name $quiet
+    [[ -e "$plugin_path/doc" ]] && \
+        $VIM -c "helptags $plugin_path/doc" -c q
+
+    return 0
 }
 
 

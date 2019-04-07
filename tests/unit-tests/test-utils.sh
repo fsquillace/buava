@@ -20,6 +20,8 @@ function oneTimeSetUp(){
 }
 
 function setUp(){
+    source "$ROOT_LOCATION/lib/utils.sh"
+
     touch $FILEPATH
     mkdir -p $HOME/symlinks
 }
@@ -606,6 +608,39 @@ function test_download(){
     assertEquals "" "$(cat $STDOUTF)"
     assertCommandFail download "http://sdf.com" "myfile"
     assertEquals "" "$(cat $STDOUTF)"
+}
+
+function test_install_or_update_vim_plugin_git_repo_null_arguments(){
+    assertCommandFailOnStatus 11 install_or_update_vim_plugin_git_repo
+    assertCommandFailOnStatus 11 install_or_update_vim_plugin_git_repo http://
+}
+
+function test_install_or_update_vim_plugin_git_repo_create_quiet(){
+    install_or_update_git_repo() {
+        echo "install_or_update_git_repo $@"
+        mkdir -p "$2"
+        return 0
+    }
+
+    assertCommandSuccess install_or_update_vim_plugin_git_repo "http://myrepo" "$HOME/myplugindir" "master" quiet
+
+    assertEquals "$(echo -e "install_or_update_git_repo http://myrepo $HOME/myplugindir master quiet")" "$(cat $STDOUTF)"
+}
+
+function test_install_or_update_vim_plugin_git_repo_create_quiet_with_doc(){
+    install_or_update_git_repo() {
+        echo "install_or_update_git_repo $@"
+        mkdir -p "$2/doc"
+        return 0
+    }
+    vim_cmd() {
+        echo "vim $@"
+    }
+    VIM=vim_cmd
+
+    assertCommandSuccess install_or_update_vim_plugin_git_repo "http://myrepo" "$HOME/myplugindir" "master" quiet
+
+    assertEquals "$(echo -e "install_or_update_git_repo http://myrepo $HOME/myplugindir master quiet\nvim -c helptags $HOME/myplugindir/doc -c q")" "$(cat $STDOUTF)"
 }
 
 function test_install_or_update_git_repo_null_arguments(){
