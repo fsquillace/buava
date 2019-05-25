@@ -23,12 +23,13 @@ function setUp(){
     source "$ROOT_LOCATION/lib/utils.sh"
 
     touch $FILEPATH
+    # Recreate HOME for the new test
     mkdir -p $HOME/symlinks
 }
 
 function tearDown(){
     rm $FILEPATH
-    rm -rf $HOME
+    [[ -d $HOME ]] && rm -rf $HOME
 }
 
 function test_check_not_null(){
@@ -772,6 +773,60 @@ function test_setup_configuration(){
     echo "2" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
     assertEquals "$(echo -e "apply_conf")" "$(cat $STDOUTF)"
+}
+
+test_backup_no_file_path() {
+    assertCommandFailOnStatus 11 backup
+}
+
+test_backup_not_existing_file_path() {
+    assertCommandFailOnStatus 2 backup "not_a_file"
+}
+
+test_backup_is_a_directory() {
+    mkdir -p mydirectory
+    assertCommandFailOnStatus 2 backup mydirectory
+}
+
+test_backup_not_already_existing_backups() {
+    touch $HOME/original_file
+    assertCommandSuccess backup $HOME/original_file
+    assertEquals "1" "$(ls $HOME/original_file.backup.* | wc -l)"
+}
+
+test_backup_no_backup_allowed() {
+    touch $HOME/original_file
+    assertCommandSuccess backup $HOME/original_file
+    echo "new stuff" > $HOME/original_file
+    assertCommandSuccess backup $HOME/original_file 0
+    local backup_files=($HOME/original_file.backup.*)
+    [[ ! -e ${backup_files[0]} ]]
+    assertEquals 0 $?
+}
+
+test_backup_clean_up_old_backups() {
+    touch $HOME/original_file
+    touch $HOME/original_file.backup.{1,2,3,4,5,6,7}
+    assertCommandSuccess backup $HOME/original_file
+    assertEquals "$(ls $HOME/original_file.backup.*)" "$(echo -e "$HOME/original_file.backup.5\n$HOME/original_file.backup.6\n$HOME/original_file.backup.7")"
+    assertCommandSuccess backup $HOME/original_file 2
+    assertEquals "$(ls $HOME/original_file.backup.*)" "$(echo -e "$HOME/original_file.backup.6\n$HOME/original_file.backup.7")"
+}
+
+test_backup_original_with_different_content() {
+    touch $HOME/original_file
+    assertCommandSuccess backup $HOME/original_file
+
+    assertEquals "1" "$(ls $HOME/original_file.backup.* | wc -l)"
+
+    sleep 2
+
+    echo "new content" > $HOME/original_file
+    assertCommandSuccess backup $HOME/original_file
+
+    assertEquals "2" "$(ls $HOME/original_file.backup.* | wc -l)"
+    assertEquals "$(cat $HOME/original_file.backup.*)" "new content"
+
 }
 
 source $ROOT_LOCATION/tests/bunit/utils/shunit2
