@@ -784,8 +784,8 @@ test_backup_not_existing_file_path() {
 }
 
 test_backup_is_a_directory() {
-    mkdir -p mydirectory
-    assertCommandFailOnStatus 2 backup mydirectory
+    mkdir -p $HOME/mydirectory
+    assertCommandFailOnStatus 2 backup $HOME/mydirectory
 }
 
 test_backup_not_already_existing_backups() {
