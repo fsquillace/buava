@@ -1035,3 +1035,57 @@ function setup_configuration() {
 
     return 0
 }
+
+#######################################
+# Smart backup function for files. If the original file is the same as the
+# latest backup, a newer backup will not be created. If there are a number of
+# backups greater than num_backups, the oldest backup will be removed.
+#
+# Globals:
+#   None
+# Arguments:
+#   file_path ($1)     : Path of the file to backup
+#   num_backups ($2?)  : Max number of allowed backups (Default: 3).
+#   quiet ($3?)        : If true, suppress the logs (Default: true).
+# Returns:
+#   None
+# Output:
+#   Backup information only when quiet is false
+#######################################
+function backup() {
+    local file_path="$1"
+    check_not_null "$file_path"
+    local num_backups="${2:-3}"
+    local quiet="${3:-true}"
+
+    [[ -d $file_path ]] && die_on_status $NO_FILE_OR_DIRECTORY "$file_path cannot be a directory."
+    [[ -f $file_path ]] || die_on_status $NO_FILE_OR_DIRECTORY "$file_path does not exist."
+
+    local backup_name="${file_path}.backup.$(date +"%Y-%m-%d-%H-%M-%S")"
+    backup_files=(${file_path}.backup.*)
+    if [[ -e ${backup_files[0]} ]]
+    then
+        # Do not backup if previous backup is the same as the original
+        local file_md5sum="$(md5sum ${file_path} | cut -f1 -d ' ')"
+        local last_backup="$(ls ${file_path}.backup.* | sort -r | head -n1)"
+        local last_backup_md5sum="$(md5sum $last_backup | cut -f1 -d ' ')"
+        if [[ "$last_backup_md5sum" != "$file_md5sum" ]]
+        then
+            $quiet || info "Previous backup has different content. Creating a new one..."
+            cp "${file_path}" "${backup_name}"
+            $quiet || info "Created backup ${backup_name}"
+        fi
+    else
+        cp "${file_path}" "${backup_name}"
+        $quiet || info "Created backup ${backup_name}"
+    fi
+
+    # Clean up oldest backups
+    for backup_name in $(ls ${file_path}.backup.* | sort | head -n -${num_backups})
+    do
+        rm -f "${backup_name}"
+        $quiet || info "Removed old backup ${backup_name}"
+    done
+
+    return 0
+}
