@@ -12,28 +12,49 @@ function oneTimeSetUp(){
 }
 
 function setUp(){
-    GNUBIN=$(TMPDIR=/tmp mktemp -d -t osx-test-gnubin.XXXXXXX)
+    COREUTILS_GNUBIN=$(TMPDIR=/tmp mktemp -d -t osx-test-gnubin.XXXXXXX)
+    SED_GNUBIN=$(TMPDIR=/tmp mktemp -d -t osx-test-gnubin.XXXXXXX)
+    GREP_GNUBIN=$(TMPDIR=/tmp mktemp -d -t osx-test-gnubin.XXXXXXX)
 }
 
 function tearDown(){
-    rm -rf "$GNUBIN"
-    unset GNUBIN
+    rm -rf "$COREUTILS_GNUBIN"
+    unset COREUTILS_GNUBIN
+
+    rm -rf "$GREP_GNUBIN"
+    unset GREP_GNUBIN
+
+    rm -rf "$SED_GNUBIN"
+    unset SED_GNUBIN
 }
 
 function test_osx_update_path_gnubin_no_exists() {
     OLDPATH=$PATH
-    OLD_GNUBIN=$GNUBIN
-    GNUBIN="/not-a-directory"
+    OLD_COREUTILS_GNUBIN=$COREUTILS_GNUBIN
+    OLD_GREP_GNUBIN=$GREP_GNUBIN
+    OLD_SED_GNUBIN=$SED_GNUBIN
+
+    COREUTILS_GNUBIN="/not-a-directory"
+    GREP_GNUBIN="/not-a-directory"
+    SED_GNUBIN="/not-a-directory"
+
     osx_update_path
+
     assertEquals "$OLDPATH" "$PATH"
+
     PATH=$OLDPATH
-    GNUBIN=$OLD_GNUBIN
+    COREUTILS_GNUBIN=$OLD_COREUTILS_GNUBIN
+    GREP_GNUBIN=$OLD_GREP_GNUBIN
+    SED_GNUBIN=$OLD_SED_GNUBIN
 }
 
 function test_osx_update_path() {
     OLDPATH=$PATH
+
     osx_update_path
-    assertEquals "$GNUBIN:$OLDPATH" "$PATH"
+
+    assertEquals "$SED_GNUBIN:$GREP_GNUBIN:$COREUTILS_GNUBIN:$OLDPATH" "$PATH"
+
     PATH=$OLDPATH
 }
 
@@ -45,28 +66,76 @@ function test_osx_attempt_command_not_a_command() {
     assertCommandFailOnStatus 127 osx_attempt_command nocmd
 }
 
-function test_osx_attempt_command_on_gnubin() {
-    cat <<EOF > $GNUBIN/mycmd
+function test_osx_attempt_command_on_coreutils_gnubin() {
+    cat <<EOF > $COREUTILS_GNUBIN/mycmd
 #!/bin/bash
 echo mycommand
 EOF
-    chmod +x $GNUBIN/mycmd
+    chmod +x $COREUTILS_GNUBIN/mycmd
+    assertCommandSuccess osx_attempt_command mycmd
+    assertEquals "mycommand" "$(cat $STDOUTF)"
+}
+
+function test_osx_attempt_command_on_grep_gnubin() {
+    cat <<EOF > $GREP_GNUBIN/mycmd
+#!/bin/bash
+echo mycommand
+EOF
+    chmod +x $GREP_GNUBIN/mycmd
+    assertCommandSuccess osx_attempt_command mycmd
+    assertEquals "mycommand" "$(cat $STDOUTF)"
+}
+
+function test_osx_attempt_command_on_sed_gnubin() {
+    cat <<EOF > $SED_GNUBIN/mycmd
+#!/bin/bash
+echo mycommand
+EOF
+    chmod +x $SED_GNUBIN/mycmd
     assertCommandSuccess osx_attempt_command mycmd
     assertEquals "mycommand" "$(cat $STDOUTF)"
 }
 
 function test_osx_attempt_command_no_executable() {
-    echo "" >> $GNUBIN/mycmd
+    echo "" >> $COREUTILS_GNUBIN/mycmd
     assertCommandFailOnStatus 127 osx_attempt_command mycmd
+    rm $COREUTILS_GNUBIN/mycmd
+
+    echo "" >> $SED_GNUBIN/mycmd
+    assertCommandFailOnStatus 127 osx_attempt_command mycmd
+    rm $SED_GNUBIN/mycmd
+
+    echo "" >> $GREP_GNUBIN/mycmd
+    assertCommandFailOnStatus 127 osx_attempt_command mycmd
+    rm $GREP_GNUBIN/mycmd
 }
 
 function test_osx_attempt_command_on_gnubin_with_spaces() {
-    cat <<EOF > $GNUBIN/mycmd
+    cat <<EOF > $COREUTILS_GNUBIN/mycmd
 #!/bin/bash
 echo "\$1"
 EOF
-    chmod +x $GNUBIN/mycmd
+    chmod +x $COREUTILS_GNUBIN/mycmd
+
+    cat <<EOF > $SED_GNUBIN/mycmd2
+#!/bin/bash
+echo "\$1"
+EOF
+    chmod +x $SED_GNUBIN/mycmd2
+
+    cat <<EOF > $GREP_GNUBIN/mycmd3
+#!/bin/bash
+echo "\$1"
+EOF
+    chmod +x $GREP_GNUBIN/mycmd3
+
     assertCommandSuccess osx_attempt_command mycmd this\ is\ one
+    assertEquals "this is one" "$(cat $STDOUTF)"
+
+    assertCommandSuccess osx_attempt_command mycmd2 this\ is\ one
+    assertEquals "this is one" "$(cat $STDOUTF)"
+
+    assertCommandSuccess osx_attempt_command mycmd3 this\ is\ one
     assertEquals "this is one" "$(cat $STDOUTF)"
 }
 
