@@ -794,7 +794,8 @@ function unlink_from() {
 #    download "https://www.mywebsite/myfile.tar.gz" "compress.tar.gz"
 #
 # Globals:
-#   None
+#   WGET (RO)
+#   CURL (RO)
 # Arguments:
 #   url ($1)          : The source URL.
 #   filename ($2?)    : Write output to the specified filename instead of the remote filename.
@@ -824,7 +825,7 @@ function download(){
 #    install_or_update_vim_plugin_git_repo "https://github.com/myname/myplugin" "/path/to/my/repo" "master"
 #
 # Globals:
-#   None
+#   VIM (RO)
 # Arguments:
 #   url ($1)          : Git URL
 #   plugin_path ($2)  : Location where the plugin
@@ -900,7 +901,8 @@ function install_or_update_git_repo(){
 #    install_git_repo "https://github.com/myname/myrepo" "/path/to/my/repo" "master"
 #
 # Globals:
-#   None
+#   PWD (RO)
+#   GIT (RO)
 # Arguments:
 #   url ($1)          : Git URL.
 #   dir_path ($2)     : Directory path.
@@ -942,7 +944,8 @@ function install_git_repo(){
 #    update_git_repo "/path/to/my/repo" "master"
 #
 # Globals:
-#   None
+#   PWD (RO)
+#   GIT (RO)
 # Arguments:
 #   dir_path ($1)     : Directory path.
 #   branch_name ($2?) : Name of the branch to checkout
@@ -1042,7 +1045,7 @@ function setup_configuration() {
 # backups greater than num_backups, the oldest backup will be removed.
 #
 # Globals:
-#   None
+#   NO_FILE_OR_DIRECTORY (RO)
 # Arguments:
 #   file_path ($1)     : Path of the file to backup
 #   num_backups ($2?)  : Max number of allowed backups (Default: 3).

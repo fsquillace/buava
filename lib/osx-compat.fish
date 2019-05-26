@@ -6,17 +6,22 @@
 #
 # vim: ft=sh
 
-set GNUBIN "/usr/local/opt/coreutils/libexec/gnubin"
+set COREUTILS_GNUBIN "/usr/local/opt/coreutils/libexec/gnubin"
+set SED_GNUBIN "/usr/local/opt/gnu-sed/libexec/gnubin"
+set GREP_GNUBIN "/usr/local/opt/grep/libexec/gnubin"
 set UNAME "uname"
 
 #######################################
-# Update PATH variable environment with the GNUBIN directory.
+# Update PATH variable environment with the
+# COREUTILS_GNUBIN, GREP_GNUBIN, SED_GNUBIN directories.
 # This function is useful for OSX systems in order to ensure that
 # GNU executables have major priority against the local executables.
 #
 # Globals:
 #   PATH   (WO)     : Put the GNUBIN directory in top of the PATH variable.
-#   GNUBIN (RO)     : The GNUBIN directory.
+#   COREUTILS_GNUBIN (RO) : The COREUTILS_GNUBIN directory.
+#   GREP_GNUBIN (RO)      : The GREP_GNUBIN directory.
+#   SED_GNUBIN (RO)       : The SED_GNUBIN directory.
 # Arguments:
 #   None
 # Returns:
@@ -25,14 +30,17 @@ set UNAME "uname"
 #   None
 #######################################
 function osx_update_path
-    [ -d "$GNUBIN" ]; and set PATH $GNUBIN $PATH
+    [ -d "$COREUTILS_GNUBIN" ]; and set PATH $COREUTILS_GNUBIN $PATH
+    [ -d "$SED_GNUBIN" ]; and set PATH $SED_GNUBIN $PATH
+    [ -d "$GREP_GNUBIN" ]; and set PATH $GREP_GNUBIN $PATH
     return 0
 end
 
 
 #######################################
 # Attempt to execute the given command first using the one located in GNUBIN
-# directory. If the executable does not exist in GNUBIN, the function attempts
+# directories.
+# If the executable does not exist in GNUBIN, the function attempts
 # to execute the command located in the usual paths defined by PATH variable.
 #
 # This function is useful for OSX systems in order to ensure that
@@ -42,7 +50,9 @@ end
 # not pollute PATH variable.
 #
 # Globals:
-#   GNUBIN (RO)  : The GNUBIN directory in which to detect the executable.
+#   COREUTILS_GNUBIN (RO) : The COREUTILS_GNUBIN directory.
+#   GREP_GNUBIN (RO)      : The GREP_GNUBIN directory.
+#   SED_GNUBIN (RO)       : The SED_GNUBIN directory.
 # Arguments:
 #   cmd  ($1)    : The command to execute.
 #   args ($2-)   : The command arguments.
@@ -54,8 +64,12 @@ end
 function osx_attempt_command
     set -l cmd $argv[1]
     set --erase argv[1]
-    if [ -x "$GNUBIN/$cmd" ]
-        eval "$GNUBIN/$cmd" $argv
+    if [ -x "$COREUTILS_GNUBIN/$cmd" ]
+        eval "$COREUTILS_GNUBIN/$cmd" $argv
+    else if [ -x "$SED_GNUBIN/$cmd" ]
+        eval "$SED_GNUBIN/$cmd" $argv
+    else if [ -x "$GREP_GNUBIN/$cmd" ]
+        eval "$GREP_GNUBIN/$cmd" $argv
     else
         eval $cmd $argv
     end
