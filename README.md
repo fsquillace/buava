@@ -42,7 +42,7 @@ This table shows a incomplete list of functions available in Buava:
 | `apply` | Idempotent apply a message in a file |
 | `is_applied` | Check if the message has been applied in a file |
 | `unapply` | Idempotent unapply a message in a file |
-| `link` | Idempotent link a configuration file to a well-known program (i.e. vim, emacs, etc)
+| `link` | Idempotent link a configuration file to a well-known program (i.e. vim, emacs, and many others)
 | `unlink` | Idempotent unlink a configuration file to a well-known program |
 | `link_to` | Idempotent symlink from a source to a destination |
 | `check_link` | Check symlink
@@ -52,6 +52,7 @@ This table shows a incomplete list of functions available in Buava:
 | `install_or_update_git_repo` | Idempotent management of git repos |
 | `setup_configuration` | Flexible setup for configurations |
 | `backup` | Keep efficiently a number of backups for a given file |
+| `delete` | Idempotent delete for files and directories |
 | `osx_detect` | True whether the platform is OSX |
 
 Troubleshooting

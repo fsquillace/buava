@@ -7,6 +7,7 @@ CONFIG_FILES[fish]="$HOME/.config/fish/config.fish"
 CONFIG_FILES[git]="$HOME/.gitconfig"
 CONFIG_FILES[gtk2]="$HOME/.gtkrc-2.0"
 CONFIG_FILES[gvim]="$HOME/.gvimrc"
+CONFIG_FILES[ideavim]="$HOME/.ideavimrc"
 CONFIG_FILES[inputrc]="$HOME/.inputrc"
 CONFIG_FILES[mutt]="$HOME/.muttrc"
 CONFIG_FILES[screen]="$HOME/.screenrc"
@@ -23,6 +24,7 @@ SOURCE_LINES[fish]="source \"{}\""
 SOURCE_LINES[git]="[include] path = \"{}\""
 SOURCE_LINES[gtk2]="include \"{}\""
 SOURCE_LINES[gvim]="source {}"
+SOURCE_LINES[ideavim]="source {}"
 SOURCE_LINES[inputrc]="\$include {}"
 SOURCE_LINES[mutt]="source {}"
 SOURCE_LINES[screen]="source {}"
@@ -1039,6 +1041,7 @@ function setup_configuration() {
     return 0
 }
 
+
 #######################################
 # Smart backup function for files. If the original file is the same as the
 # latest backup, a newer backup will not be created. If there are a number of
@@ -1090,5 +1093,25 @@ function backup() {
         $quiet || info "Removed old backup ${backup_name}"
     done
 
+    return 0
+}
+
+
+#######################################
+# Simple function to remember to remove file in an idempotent fashion
+# (do not fail if file does not exist).
+#
+# Globals:
+#   None
+# Arguments:
+#   file_paths ($@)     : Path of the file to remove
+# Returns:
+#   None
+# Output:
+#   None
+#######################################
+function delete() {
+    check_not_null "$@"
+    rm -rf "$@"
     return 0
 }

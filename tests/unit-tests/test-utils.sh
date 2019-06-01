@@ -338,6 +338,11 @@ function test_link_all_programs(){
     assertCommandSuccess unlink gvim $FILEPATH
     assertEquals "" "$(cat $HOME/.gvimrc)"
 
+    assertCommandSuccess link "ideavim" $FILEPATH
+    assertEquals "$(echo -e "source $FILEPATH")" "$(cat $HOME/.ideavimrc)"
+    assertCommandSuccess unlink ideavim $FILEPATH
+    assertEquals "" "$(cat $HOME/.ideavimrc)"
+
     assertCommandSuccess link inputrc $FILEPATH
     assertEquals "$(echo -e "\$include $FILEPATH")" "$(cat $HOME/.inputrc)"
     assertCommandSuccess unlink inputrc $FILEPATH
@@ -827,6 +832,44 @@ test_backup_original_with_different_content() {
     assertEquals "2" "$(ls $HOME/original_file.backup.* | wc -l)"
     assertEquals "$(cat $HOME/original_file.backup.*)" "new content"
 
+}
+
+test_delete_no_file_path() {
+    assertCommandFailOnStatus 11 delete
+}
+
+test_delete_file() {
+    touch $HOME/myfile
+    assertCommandSuccess delete $HOME/myfile
+
+    [[ ! -e $HOME/myfile ]]
+    assertEquals "0" $?
+}
+
+test_delete_multiple_files() {
+    touch $HOME/myfile
+    touch $HOME/myfile2
+    touch "$HOME/myfile with spaces"
+    assertCommandSuccess delete $HOME/myfile $HOME/myfile2 "$HOME/myfile with spaces"
+
+    cat $STDERRF
+
+    [[ ! -e $HOME/myfile ]]
+    assertEquals "0" $?
+
+    [[ ! -e $HOME/myfile2 ]]
+    assertEquals "0" $?
+
+    [[ ! -e "$HOME/myfile with spaces" ]]
+    assertEquals "0" $?
+}
+
+test_delete_directory() {
+    mkdir $HOME/mydir
+    assertCommandSuccess delete $HOME/mydir
+
+    [[ ! -e $HOME/mydir ]]
+    assertEquals "0" $?
 }
 
 source $ROOT_LOCATION/tests/bunit/utils/shunit2
