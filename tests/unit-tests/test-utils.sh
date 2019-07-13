@@ -749,35 +749,59 @@ function test_setup_configuration(){
         echo "unapply_conf"
     }
 
+    view_conf(){
+        echo "view_conf"
+    }
+
+    EDITOR=view_conf
+
     echo "1" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "unapply_conf" "$(cat $STDOUTF)"
+    grep -q "unapply_conf" $STDOUTF
+    assertEquals 0 $?
+    assertEquals "unapply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 
     echo -e "\n" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "unapply_conf" "$(cat $STDOUTF)"
+    assertEquals "unapply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
+
+    echo -e "1" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "unapply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 
     echo "0" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "$(echo -e "new_conf\napply_conf")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "new_conf\napply_conf")" "$(cat $STDOUTF | grep -v "Setup configuration for")"
+
+    echo -e "2\n\n" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "unapply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 
     touch $conf_file_path
 
     echo -e "\n" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "apply_conf" "$(cat $STDOUTF)"
+    assertEquals "apply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 
-    echo -e "1" | assertCommandSuccess setup_configuration $conf_file_path \
+    echo -e "2" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "unapply_conf" "$(cat $STDOUTF)"
+    assertEquals "unapply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 
     echo "0" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "$(echo -e "new_conf\napply_conf")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "new_conf\napply_conf")" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 
-    echo "2" | assertCommandSuccess setup_configuration $conf_file_path \
+    echo "3" | assertCommandSuccess setup_configuration $conf_file_path \
         new_conf apply_conf unapply_conf
-    assertEquals "$(echo -e "apply_conf")" "$(cat $STDOUTF)"
+    assertEquals "apply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
+
+    echo -e "1\n\n" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "$(echo -e "view_conf\napply_conf")" "$(cat $STDOUTF | grep -v "Setup configuration for")"
+
+    echo "4\n3" | assertCommandSuccess setup_configuration $conf_file_path \
+        new_conf apply_conf unapply_conf
+    assertEquals "apply_conf" "$(cat $STDOUTF | grep -v "Setup configuration for")"
 }
 
 test_backup_no_file_path() {

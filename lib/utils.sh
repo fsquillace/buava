@@ -990,10 +990,10 @@ function update_git_repo(){
 # Simplify the interactive procedure to create configuration file
 # or skip it.
 # If the configuration file already exists the function will give
-# the option to either re-use the existing configuration or remove it.
+# the option to either view, re-use the existing configuration or remove it.
 #
 # Globals:
-#   None
+#   EDITOR (RO)             : Editor to use for viewing the config file
 # Arguments:
 #   conf_file_path ($1)     : Path of the config file to manage
 #   new_conf_func ($2)      : function which creates the config file
@@ -1014,29 +1014,40 @@ function setup_configuration() {
     local unapply_conf_func="$4"
     check_not_null "$unapply_conf_func"
 
-    local answers=("Create new" "Skip")
-    local default_answer="Skip"
-    [[ -e $conf_file_path ]] && { \
-        local answers=("Create new" "Remove existing" "Apply existing")
-        default_answer="Apply existing"
-    }
-    local chosen=$(choose "Choose option about configuration" "${default_answer}" "${answers[@]}")
+    chosen="View existing"
+    while [[ $chosen == "View existing" ]]
+    do
+        local answers=("Create new" "Skip")
+        local default_answer="Skip"
+        [[ -e $conf_file_path ]] && { \
+            local answers=("Create new" "View existing" "Remove existing" "Apply existing")
+            default_answer="Apply existing"
+        }
+        info "Setup configuration for ${conf_file_path}"
+        local chosen=$(choose "Choose option about configuration" "${default_answer}" "${answers[@]}")
 
-    [[ $chosen == "Skip" ]] && { \
-        $unapply_conf_func
-        return 0
-    }
-    [[ $chosen == "Remove existing" ]] && { \
-        $unapply_conf_func
-        return 0
-    }
-    [[ $chosen == "Apply existing" ]] && { \
-        $apply_conf_func
-        return 0
-    }
-
-    $new_conf_func
-    $apply_conf_func
+        [[ $chosen == "Skip" ]] && { \
+            $unapply_conf_func
+            return 0
+        }
+        [[ $chosen == "View existing" ]] && { \
+            editor=${EDITOR:-cat}
+            $editor $conf_file_path
+        }
+        [[ $chosen == "Remove existing" ]] && { \
+            $unapply_conf_func
+            return 0
+        }
+        [[ $chosen == "Apply existing" ]] && { \
+            $apply_conf_func
+            return 0
+        }
+        [[ $chosen == "Create new" ]] && { \
+            $new_conf_func
+            $apply_conf_func
+            return 0
+        }
+    done
 
     return 0
 }
