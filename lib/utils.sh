@@ -129,7 +129,7 @@ function die_on_status() {
 #   Message printed to stderr.
 #######################################
 function error() {
-    echoerr -e "\033[1;31m$@\033[0m"
+    echoerr -e "\033[0;31m$@\033[0m"
 }
 
 #######################################
@@ -146,7 +146,7 @@ function error() {
 #######################################
 function warn() {
     # $@: msg (mandatory) - str: Message to print
-    echoerr -e "\033[1;33m$@\033[0m"
+    echoerr -e "\033[0;33m$@\033[0m"
 }
 
 #######################################
@@ -162,7 +162,7 @@ function warn() {
 #   Message printed to stdout.
 #######################################
 function info(){
-    echo -e "\033[1;36m$@\033[0m"
+    echo -e "\033[0;36m$@\033[0m"
 }
 
 #######################################

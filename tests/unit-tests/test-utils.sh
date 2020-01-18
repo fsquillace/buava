@@ -44,31 +44,31 @@ function test_echoerr(){
 
 function test_error(){
     assertCommandSuccess error "Test"
-    local expected=$(echo -e "\033[1;31mTest\033[0m")
+    local expected=$(echo -e "\033[0;31mTest\033[0m")
     assertEquals "$expected" "$(cat $STDERRF)"
 }
 
 function test_warn(){
     assertCommandSuccess warn "Test"
-    local expected=$(echo -e "\033[1;33mTest\033[0m")
+    local expected=$(echo -e "\033[0;33mTest\033[0m")
     assertEquals "$expected" "$(cat $STDERRF)"
 }
 
 function test_info(){
     assertCommandSuccess info "Test"
-    local expected=$(echo -e "\033[1;36mTest\033[0m")
+    local expected=$(echo -e "\033[0;36mTest\033[0m")
     assertEquals "$expected" "$(cat $STDOUTF)"
 }
 
 function test_die(){
     assertCommandFail die "Test"
-    local expected=$(echo -e "\033[1;31mTest\033[0m")
+    local expected=$(echo -e "\033[0;31mTest\033[0m")
     assertEquals "$expected" "$(cat $STDERRF)"
 }
 
 function test_die_on_status(){
     assertCommandFailOnStatus 222 die_on_status 222 "Test"
-    local expected=$(echo -e "\033[1;31mTest\033[0m")
+    local expected=$(echo -e "\033[0;31mTest\033[0m")
     assertEquals "$expected" "$(cat $STDERRF)"
 }
 
