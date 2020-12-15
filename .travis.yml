@@ -3,6 +3,8 @@ os:
   - linux
   - osx
 
+osx_image: xcode12
+
 language: bash
 
 sudo: required
@@ -12,7 +14,7 @@ env:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./tests/test-utils/installs/install-linux-deps.sh; fi;
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./tests/test-utils/installs/install-osx-deps.sh; fi;
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./tests/test-utils/installs/install-osx-deps-fast.sh; fi;
 
 install:
   - PATH=$PWD/bin:$PATH
