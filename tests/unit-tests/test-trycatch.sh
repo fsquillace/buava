@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-ROOT_LOCATION="$(dirname $0)/../.."
+# shellcheck disable=SC1091
+
+ROOT_LOCATION="$(dirname "$0")/../.."
 
 source "$ROOT_LOCATION/tests/bunit/utils/utils.sh"
 
@@ -95,4 +97,4 @@ function test_try_catch_throw() {
     catch || assertEquals 99 $?
 }
 
-source $ROOT_LOCATION/tests/bunit/utils/shunit2
+source "$ROOT_LOCATION"/tests/bunit/utils/shunit2

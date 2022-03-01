@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-ROOT_LOCATION="$(dirname $0)/../.."
+# shellcheck disable=SC1091
+
+ROOT_LOCATION="$(dirname "$0")/../.."
 
 source "$ROOT_LOCATION/tests/bunit/utils/utils.sh"
 source "$ROOT_LOCATION/lib/osx-compat.sh"
@@ -67,76 +69,76 @@ function test_osx_attempt_command_not_a_command() {
 }
 
 function test_osx_attempt_command_on_coreutils_gnubin() {
-    cat <<EOF > $COREUTILS_GNUBIN/mycmd
+    cat <<EOF > "$COREUTILS_GNUBIN"/mycmd
 #!/bin/bash
 echo mycommand
 EOF
-    chmod +x $COREUTILS_GNUBIN/mycmd
+    chmod +x "$COREUTILS_GNUBIN"/mycmd
     assertCommandSuccess osx_attempt_command mycmd
-    assertEquals "mycommand" "$(cat $STDOUTF)"
+    assertEquals "mycommand" "$(cat "$STDOUTF")"
 }
 
 function test_osx_attempt_command_on_grep_gnubin() {
-    cat <<EOF > $GREP_GNUBIN/mycmd
+    cat <<EOF > "$GREP_GNUBIN"/mycmd
 #!/bin/bash
 echo mycommand
 EOF
-    chmod +x $GREP_GNUBIN/mycmd
+    chmod +x "$GREP_GNUBIN"/mycmd
     assertCommandSuccess osx_attempt_command mycmd
-    assertEquals "mycommand" "$(cat $STDOUTF)"
+    assertEquals "mycommand" "$(cat "$STDOUTF")"
 }
 
 function test_osx_attempt_command_on_sed_gnubin() {
-    cat <<EOF > $SED_GNUBIN/mycmd
+    cat <<EOF > "$SED_GNUBIN"/mycmd
 #!/bin/bash
 echo mycommand
 EOF
-    chmod +x $SED_GNUBIN/mycmd
+    chmod +x "$SED_GNUBIN"/mycmd
     assertCommandSuccess osx_attempt_command mycmd
-    assertEquals "mycommand" "$(cat $STDOUTF)"
+    assertEquals "mycommand" "$(cat "$STDOUTF")"
 }
 
 function test_osx_attempt_command_no_executable() {
-    echo "" >> $COREUTILS_GNUBIN/mycmd
+    echo "" >> "$COREUTILS_GNUBIN"/mycmd
     assertCommandFailOnStatus 127 osx_attempt_command mycmd
-    rm $COREUTILS_GNUBIN/mycmd
+    rm "$COREUTILS_GNUBIN"/mycmd
 
-    echo "" >> $SED_GNUBIN/mycmd
+    echo "" >> "$SED_GNUBIN"/mycmd
     assertCommandFailOnStatus 127 osx_attempt_command mycmd
-    rm $SED_GNUBIN/mycmd
+    rm "$SED_GNUBIN"/mycmd
 
-    echo "" >> $GREP_GNUBIN/mycmd
+    echo "" >> "$GREP_GNUBIN"/mycmd
     assertCommandFailOnStatus 127 osx_attempt_command mycmd
-    rm $GREP_GNUBIN/mycmd
+    rm "$GREP_GNUBIN"/mycmd
 }
 
 function test_osx_attempt_command_on_gnubin_with_spaces() {
-    cat <<EOF > $COREUTILS_GNUBIN/mycmd
+    cat <<EOF > "$COREUTILS_GNUBIN"/mycmd
 #!/bin/bash
 echo "\$1"
 EOF
-    chmod +x $COREUTILS_GNUBIN/mycmd
+    chmod +x "$COREUTILS_GNUBIN"/mycmd
 
-    cat <<EOF > $SED_GNUBIN/mycmd2
+    cat <<EOF > "$SED_GNUBIN"/mycmd2
 #!/bin/bash
 echo "\$1"
 EOF
-    chmod +x $SED_GNUBIN/mycmd2
+    chmod +x "$SED_GNUBIN"/mycmd2
 
-    cat <<EOF > $GREP_GNUBIN/mycmd3
+    cat <<EOF > "$GREP_GNUBIN"/mycmd3
 #!/bin/bash
 echo "\$1"
 EOF
-    chmod +x $GREP_GNUBIN/mycmd3
+    chmod +x "$GREP_GNUBIN"/mycmd3
 
     assertCommandSuccess osx_attempt_command mycmd this\ is\ one
-    assertEquals "this is one" "$(cat $STDOUTF)"
+    assertEquals "this is one" "$(cat "$STDOUTF")"
 
     assertCommandSuccess osx_attempt_command mycmd2 this\ is\ one
-    assertEquals "this is one" "$(cat $STDOUTF)"
+    assertEquals "this is one" "$(cat "$STDOUTF")"
 
     assertCommandSuccess osx_attempt_command mycmd3 this\ is\ one
-    assertEquals "this is one" "$(cat $STDOUTF)"
+    assertEquals "this is one" "$(cat "$STDOUTF")"
 }
 
 function test_osx_detect() {
@@ -151,8 +153,9 @@ function test_osx_detect_fail() {
     uname_cmd(){
         echo 'Linux'
     }
+    # shellcheck disable=SC2034
     UNAME=uname_cmd
     assertCommandFailOnStatus 1 osx_detect
 }
 
-source $ROOT_LOCATION/tests/bunit/utils/shunit2
+source "$ROOT_LOCATION"/tests/bunit/utils/shunit2

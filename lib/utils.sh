@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 declare -A CONFIG_FILES
 CONFIG_FILES[bash]="$HOME/.bashrc"
@@ -92,7 +92,7 @@ function echoerr() {
 #   Message printed to stderr.
 #######################################
 function die() {
-    error $@
+    error "$@"
     exit 1
 }
 
@@ -112,8 +112,8 @@ function die() {
 function die_on_status() {
     status=$1
     shift
-    error $@
-    exit $status
+    error "$@"
+    exit "$status"
 }
 
 #######################################
@@ -129,7 +129,7 @@ function die_on_status() {
 #   Message printed to stderr.
 #######################################
 function error() {
-    echoerr -e "\033[0;31m$@\033[0m"
+    echoerr -e "\033[0;31m$*\033[0m"
 }
 
 #######################################
@@ -146,7 +146,7 @@ function error() {
 #######################################
 function warn() {
     # $@: msg (mandatory) - str: Message to print
-    echoerr -e "\033[0;33m$@\033[0m"
+    echoerr -e "\033[0;33m$*\033[0m"
 }
 
 #######################################
@@ -162,7 +162,7 @@ function warn() {
 #   Message printed to stdout.
 #######################################
 function info(){
-    echo -e "\033[0;36m$@\033[0m"
+    echo -e "\033[0;36m$*\033[0m"
 }
 
 #######################################
@@ -269,12 +269,12 @@ function normal(){
 function ask(){
     local question=$1
     local default_answer=$2
-    check_not_null $question
+    check_not_null "$question"
 
-    if [[ ! -z "$default_answer" ]]
+    if [[ -n "$default_answer" ]]
     then
         local answers="Y y N n"
-        [[ "$answers" =~ "$default_answer" ]] || { error "The default answer: $default_answer is wrong."; return $WRONG_ANSWER; }
+        [[ "$answers" =~ $default_answer ]] || { error "The default answer: $default_answer is wrong."; return $WRONG_ANSWER; }
     fi
 
     local default="Y"
@@ -283,15 +283,16 @@ function ask(){
     local other="n"
     [[ "$default" == "N" ]] && other="y"
 
-    local prompt=$(info "$question (${default}/${other})> ")
+    local prompt
+    prompt=$(info "$question (${default}/${other})> ")
 
     local res
-    read -p "$prompt" res
+    read -r -p "$prompt" res
     res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
     while [[ "$res" != "Y" ]] && [[ "$res" != "N"  ]] && [[ "$res" != "" ]];
     do
         warn "The chosen value is not correct. Type again...\n"
-        read -p "$prompt" res
+        read -r -p "$prompt" res
         res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
     done
 
@@ -332,9 +333,9 @@ function choose(){
     local default_answer=$2
     shift 2
     local values=("$@")
-    check_not_null $question
-    check_not_null $default_answer
-    check_not_null $values
+    check_not_null "$question"
+    check_not_null "$default_answer"
+    check_not_null "${values[@]}"
 
     local values_text=""
     for i in "${!values[@]}"
@@ -342,15 +343,16 @@ function choose(){
         values_text="$values_text\n$i) ${values[$i]}"
     done
 
-    local prompt=$(info "$question\n$values_text\n\nEnter a number (default value: ${default_answer})> ")
+    local prompt
+    prompt=$(info "$question\n$values_text\n\nEnter a number (default value: ${default_answer})> ")
 
     local res
-    read -p "$prompt" res
+    read -r -p "$prompt" res
     local regex='^[0-9]+$'
-    while [[ "$res" != "" ]] && ( ! [[ "$res" =~ $regex ]] || [[ "$res" -ge ${#values[@]} ]] || [[ "$res" -lt 0 ]] )
+    while [[ "$res" != "" ]] && { ! [[ "$res" =~ $regex ]] || [[ "$res" -ge ${#values[@]} ]] || [[ "$res" -lt 0 ]]; }
     do
         warn "The chosen value is not correct. Type again...\n"
-        read -p "$prompt" res
+        read -r -p "$prompt" res
     done
 
     if [[ -z "$res" ]]
@@ -413,12 +415,14 @@ function contains_element () {
 function input(){
     local question=$1
     local default_input=$2
-    check_not_null $question
+    check_not_null "$question"
 
-    local prompt=$(info "${question} (default: ${default_input})> ")
+    local prompt
+    prompt=$(info "${question} (default: ${default_input})> ")
 
-    local res=""
-    read -p "$prompt" res
+    local res
+    res=""
+    read -r -p "$prompt" res
 
     [[ "$res" == "" ]] && res="$default_input"
 
@@ -441,10 +445,15 @@ function input(){
 #   None
 #######################################
 function check_and_trap() {
-    local sigs="${@:2:${#@}}"
-    local traps="$(trap -p $sigs)"
+    local sigs
+    # shellcheck disable=SC2124
+    sigs="${@:2:${#@}}"
+    local traps
+    # shellcheck disable=SC2086
+    traps="$(trap -p $sigs)"
     [[ $traps ]] && die "Attempting to overwrite existing $sigs trap: $traps"
-    trap $@
+    # shellcheck disable=SC2064
+    trap "$@"
 }
 
 #######################################
@@ -462,10 +471,15 @@ function check_and_trap() {
 #   None
 #######################################
 function check_and_force_trap() {
-    local sigs="${@:2:${#@}}"
-    local traps="$(trap -p $sigs)"
+    local sigs
+    # shellcheck disable=SC2124
+    sigs="${@:2:${#@}}"
+    local traps
+    # shellcheck disable=SC2086
+    traps="$(trap -p $sigs)"
     [[ $traps ]] && warn "Attempting to overwrite existing $sigs trap: $traps"
-    trap $@
+    # shellcheck disable=SC2064
+    trap "$@"
 }
 
 #######################################
@@ -495,19 +509,21 @@ function apply(){
     local string_to_apply=$1
     local config_file=$2
     local apply_at_top=$3
-    check_not_null $string_to_apply
-    check_not_null $config_file
+    check_not_null "$string_to_apply"
+    check_not_null "$config_file"
 
     if [ ! -e "$config_file" ]
     then
-        local dirp=$(dirname "$config_file")
-        mkdir -p $dirp
+        local dirp
+        dirp=$(dirname "$config_file")
+        mkdir -p "$dirp"
         touch "$config_file"
     fi
 
     local putfirst=true
     [ -z "$apply_at_top" ] || putfirst=$apply_at_top
 
+    # shellcheck disable=SC2155
     local original=$(grep -F -x -v "$string_to_apply" "$config_file")
     if $putfirst
     then
@@ -538,8 +554,8 @@ function apply(){
 function is_applied(){
     local string_to_apply=$1
     local config_file=$2
-    check_not_null $string_to_apply
-    check_not_null $config_file
+    check_not_null "$string_to_apply"
+    check_not_null "$config_file"
 
     grep -q -F -x "$string_to_apply" "$config_file"
 }
@@ -566,13 +582,14 @@ function is_applied(){
 function unapply(){
     local string_to_apply=$1
     local config_file=$2
-    check_not_null $string_to_apply
-    check_not_null $config_file
+    check_not_null "$string_to_apply"
+    check_not_null "$config_file"
 
     [ ! -e "$config_file" ] && return
 
+    # shellcheck disable=SC2155
     local original=$(grep -F -x -v "$string_to_apply" "$config_file")
-    echo -e "$original" > $config_file
+    echo -e "$original" > "$config_file"
 }
 
 #######################################
@@ -605,15 +622,16 @@ function link() {
     local program=$1
     local config_file_to_apply=$2
     local apply_at_top=$3
-    check_not_null $program
-    check_not_null $config_file_to_apply
+    check_not_null "$program"
+    check_not_null "$config_file_to_apply"
 
-    local config_file=${CONFIG_FILES[$program]}
+    local config_file
+    config_file=${CONFIG_FILES[$program]}
     [ -z "$config_file" ] && { error "The program $program does not exist" ; return 33; }
     local source_line=${SOURCE_LINES[$program]}
     [ -z "$source_line" ] && { error "The program $program does not exist" ; return 33; }
 
-    apply "${source_line/\{\}/$config_file_to_apply}" "$config_file" $apply_at_top
+    apply "${source_line/\{\}/$config_file_to_apply}" "$config_file" "$apply_at_top"
 }
 
 #######################################
@@ -644,10 +662,11 @@ function link() {
 function unlink() {
     local program=$1
     local config_file_to_apply=$2
-    check_not_null $program
-    check_not_null $config_file_to_apply
+    check_not_null "$program"
+    check_not_null "$config_file_to_apply"
 
-    local config_file=${CONFIG_FILES[$program]}
+    local config_file
+    config_file=${CONFIG_FILES[$program]}
     [ -z "$config_file" ] && { error "The program $program does not exist" ; return 33; }
     local source_line=${SOURCE_LINES[$program]}
     [ -z "$source_line" ] && { error "The program $program does not exist" ; return 33; }
@@ -683,9 +702,9 @@ function unlink() {
 #######################################
 function link_to() {
     local file_path=$1
-    check_not_null ${file_path}
+    check_not_null "${file_path}"
     local symlink_path=$2
-    check_not_null ${symlink_path}
+    check_not_null "${symlink_path}"
 
     check_link "${file_path}" "${symlink_path}"
     [[ ! -L ${symlink_path} ]] && ln -s "${file_path}" "${symlink_path}"
@@ -721,9 +740,9 @@ function link_to() {
 #######################################
 function check_link() {
     local file_path=$1
-    check_not_null ${file_path}
+    check_not_null "${file_path}"
     local symlink_path=$2
-    check_not_null ${symlink_path}
+    check_not_null "${symlink_path}"
 
     [[ ! -e "${file_path}" ]] \
         && { error "The path $file_path does not exist" ; return $NO_FILE_OR_DIRECTORY; }
@@ -736,8 +755,10 @@ function check_link() {
 
     if [[ -e ${symlink_path}  ]]
     then
-        local file_real_path=$(readlink -f "${file_path}")
-        local symlink_real_path=$(readlink -f "${symlink_path}")
+        local file_real_path
+        file_real_path=$(readlink -f "${file_path}")
+        local symlink_real_path
+        symlink_real_path=$(readlink -f "${symlink_path}")
 
         [[ "$symlink_real_path" != "$file_real_path" ]] \
             && { warn "Could not unlink: Symlink ${symlink_path} already exists from source ${symlink_real_path} which is different from $file_real_path"; return 36; }
@@ -774,9 +795,9 @@ function check_link() {
 #######################################
 function unlink_from() {
     local file_path=$1
-    check_not_null ${file_path}
+    check_not_null "${file_path}"
     local symlink_path=$2
-    check_not_null ${symlink_path}
+    check_not_null "${symlink_path}"
 
     check_link "${file_path}" "${symlink_path}"
     [[ -L ${symlink_path} ]] && rm -f "${symlink_path}"
@@ -850,7 +871,7 @@ function install_or_update_vim_plugin_git_repo(){
     local branch_name="$3"
     local quiet="$4"
 
-    install_or_update_git_repo $url "$plugin_path" $branch_name $quiet
+    install_or_update_git_repo "$url" "$plugin_path" "$branch_name" "$quiet"
     [[ -e "$plugin_path/doc" ]] && \
         $VIM -c "helptags $plugin_path/doc" -c q
 
@@ -889,9 +910,9 @@ function install_or_update_git_repo(){
     local quiet="$4"
 
     if [[ -d $dir_path ]]; then
-        update_git_repo "$dir_path" "$branch_name" $quiet
+        update_git_repo "$dir_path" "$branch_name" "$quiet"
     else
-        install_git_repo "$url" "$dir_path" "$branch_name" $quiet
+        install_git_repo "$url" "$dir_path" "$branch_name" "$quiet"
     fi
 }
 
@@ -931,11 +952,11 @@ function install_git_repo(){
 
     last_pwd="$PWD"
     $GIT clone $quiet_opt "$url" "$dir_path"
-    cd "$dir_path"
+    cd "$dir_path" || return 1
     $GIT submodule $quiet_opt update --init --recursive
     $GIT --no-pager log -n 3 --no-merges --pretty="tformat:    - %s (%ar)"
-    [[ -z $branch_name ]] || $GIT checkout $quiet_opt $branch_name
-    cd "$last_pwd"
+    [[ -z $branch_name ]] || $GIT checkout $quiet_opt "$branch_name"
+    cd "$last_pwd" || return 1
 }
 
 #######################################
@@ -970,19 +991,20 @@ function update_git_repo(){
     $quiet && local quiet_opt="--quiet"
 
     last_pwd="$PWD"
-    cd "$dir_path"
-    local last_commit=$($GIT rev-parse HEAD)
+    cd "$dir_path" || return 1
+    local last_commit
+    last_commit=$($GIT rev-parse HEAD)
     $GIT fetch $quiet_opt --all
     if [[ -z $branch_name ]]
     then
-        $GIT reset $quiet_opt --hard @{upstream}
+        $GIT reset $quiet_opt --hard "@{upstream}"
     else
-        $GIT reset $quiet_opt --hard origin/$branch_name
+        $GIT reset $quiet_opt --hard origin/"$branch_name"
     fi
     $GIT submodule $quiet_opt update --init --recursive
-    $GIT --no-pager log --no-merges --pretty="tformat:    - %s (%ar)" $last_commit..HEAD
-    [[ -z $branch_name ]] || $GIT checkout $quiet_opt $branch_name
-    cd "$last_pwd"
+    $GIT --no-pager log --no-merges --pretty="tformat:    - %s (%ar)" "$last_commit"..HEAD
+    [[ -z $branch_name ]] || $GIT checkout $quiet_opt "$branch_name"
+    cd "$last_pwd" || return 1
 }
 
 
@@ -1024,7 +1046,8 @@ function setup_configuration() {
             default_answer="Apply existing"
         }
         info "Setup configuration for ${conf_file_path}"
-        local chosen=$(choose "Choose option about configuration" "${default_answer}" "${answers[@]}")
+        local chosen
+        chosen=$(choose "Choose option about configuration" "${default_answer}" "${answers[@]}")
 
         [[ $chosen == "Skip" ]] && { \
             $unapply_conf_func
@@ -1032,7 +1055,7 @@ function setup_configuration() {
         }
         [[ $chosen == "View existing" ]] && { \
             editor=${EDITOR:-cat}
-            $editor $conf_file_path
+            $editor "$conf_file_path"
         }
         [[ $chosen == "Remove existing" ]] && { \
             $unapply_conf_func
@@ -1078,14 +1101,19 @@ function backup() {
     [[ -d $file_path ]] && die_on_status $NO_FILE_OR_DIRECTORY "$file_path cannot be a directory."
     [[ -f $file_path ]] || die_on_status $NO_FILE_OR_DIRECTORY "$file_path does not exist."
 
-    local backup_name="${file_path}.backup.$(date +"%Y-%m-%d-%H-%M-%S")"
-    backup_files=(${file_path}.backup.*)
+    local backup_name
+    backup_name="${file_path}.backup.$(date +"%Y-%m-%d-%H-%M-%S")"
+    backup_files=("${file_path}".backup.*)
     if [[ -e ${backup_files[0]} ]]
     then
         # Do not backup if previous backup is the same as the original
-        local file_md5sum="$(md5sum ${file_path} | cut -f1 -d ' ')"
-        local last_backup="$(ls ${file_path}.backup.* | sort -r | head -n1)"
-        local last_backup_md5sum="$(md5sum $last_backup | cut -f1 -d ' ')"
+        local file_md5sum
+        file_md5sum="$(md5sum "${file_path}" | cut -f1 -d ' ')"
+        local last_backup
+        # shellcheck disable=SC2012
+        last_backup="$(ls "${file_path}".backup.* | sort -r | head -n1)"
+        local last_backup_md5sum
+        last_backup_md5sum="$(md5sum "$last_backup" | cut -f1 -d ' ')"
         if [[ "$last_backup_md5sum" != "$file_md5sum" ]]
         then
             $quiet || info "Previous backup has different content. Creating a new one..."
@@ -1098,7 +1126,8 @@ function backup() {
     fi
 
     # Clean up oldest backups
-    for backup_name in $(ls ${file_path}.backup.* | sort | head -n -${num_backups})
+        # shellcheck disable=SC2012
+    for backup_name in $(ls "${file_path}".backup.* | sort | head -n -"${num_backups}")
     do
         rm -f "${backup_name}"
         $quiet || info "Removed old backup ${backup_name}"

@@ -5,6 +5,7 @@
 #   None
 #
 # vim: ft=sh
+# shellcheck shell=bash
 
 COREUTILS_GNUBIN="/usr/local/opt/coreutils/libexec/gnubin"
 SED_GNUBIN="/usr/local/opt/gnu-sed/libexec/gnubin"

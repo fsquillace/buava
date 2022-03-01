@@ -39,6 +39,7 @@
 # - lib/utils/utils.sh
 #
 # vim: ft=sh
+# shellcheck shell=bash
 
 #######################################
 # Invoke a certain command in a subshell and capture its status in case of failures.
@@ -56,7 +57,7 @@
 #   The output of the command.
 #######################################
 function try() {
-    check_not_null $1
+    check_not_null "$1"
     [[ $- = *e* ]]; SAVED_OPT_E=$?
     INSIDE_TRY=true
     set +e
@@ -80,6 +81,7 @@ function try() {
 function catch()
 {
     local ex_code=$?
+    # shellcheck disable=SC2015
     [[ $SAVED_OPT_E -eq 0 ]] && set -e || set +e
     unset INSIDE_TRY
     return $ex_code
@@ -101,8 +103,8 @@ function catch()
 #######################################
 function throw()
 {
-    check_not_null $1
-    [ -z "$INSIDE_TRY" ] || exit $1
-    return $1
+    check_not_null "$1"
+    [ -z "$INSIDE_TRY" ] || exit "$1"
+    return "$1"
 }
 
