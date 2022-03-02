@@ -1,7 +1,12 @@
 # vim: ft=yaml
-os:
-  - linux
-  - osx
+
+jobs:
+  include:
+    -
+      os: linux
+    -
+      os: osx
+      osx_image: xcode13.2
 
 language: bash
 
@@ -12,7 +17,7 @@ env:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./tests/test-utils/installs/install-linux-deps.sh; fi;
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./tests/test-utils/installs/install-osx-deps.sh; fi;
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./tests/test-utils/installs/install-osx-deps-fast.sh; fi;
 
 install:
   - PATH=$PWD/bin:$PATH
@@ -22,6 +27,6 @@ script:
   - bash --version
   - zsh --version
   - fish --version
-  - shellcheck lib/*.sh tests/unit-tests/*.sh
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then shellcheck lib/*.sh tests/unit-tests/*.sh; fi;
   - ./tests/bunit/bin/checkstyle.sh ./lib
   - ./tests/bunit/bin/unit-tests.sh ./tests/unit-tests
